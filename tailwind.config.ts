@@ -8,6 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      container: {
+        center: true,
+        padding: {
+          DEFAULT: "1rem",
+          sm: "2rem",
+          md: "3rem",
+        },
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
@@ -15,5 +23,6 @@ const config: Config = {
     },
   },
   plugins: [],
+  darkMode: "class",
 };
 export default config;
