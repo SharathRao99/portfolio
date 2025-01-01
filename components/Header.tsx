@@ -83,7 +83,7 @@ export default function Header() {
             <div className="overflow-y-auto mt-4 flex-1">
               <nav className="flex flex-col gap-4">
                 <Link
-                  href="#contact"
+                  href="mailto:sharath.byadagodu@outlook.com"
                   className="text-black dark:text-white px-4 py-2 rounded-md transition-colors duration-300 border-b border-gray-200 dark:border-gray-800"
                 >
                   Contact Me
