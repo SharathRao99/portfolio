@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { Providers } from "./provider";
 import Header from "../components/Header";
@@ -36,6 +37,7 @@ export default function RootLayout({
           <Header />
           {children}
           <Footer />
+          <Analytics />
         </Providers>
       </body>
     </html>
