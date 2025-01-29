@@ -57,8 +57,9 @@ export default function Header() {
                 Contact Me
               </Link>
               <Link
-                href="/data/resume.pdf"
+                href="/data/Sharath B C - Resume.pdf"
                 className="bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-4 py-2 rounded-md transition-colors duration-300"
+                target="_blank"
                 download
               >
                 Download Resume
@@ -78,7 +79,7 @@ export default function Header() {
         </div>
 
         {isMenuOpen && (
-          <div className={`z-10 bg-white dark:bg-black ${isMenuOpen ? 'flex flex-col flex-1' : 'hidden'}`}>
+          <div className={`z-10 bg-white dark:bg-black md:hidden ${isMenuOpen ? 'flex flex-col flex-1' : 'hidden'}`}>
 
             <div className="overflow-y-auto mt-4 flex-1">
               <nav className="flex flex-col gap-4">
@@ -89,8 +90,9 @@ export default function Header() {
                   Contact Me
                 </Link>
                 <Link
-                  href="/data/resume.pdf"
+                  href="/data/Sharath B C - Resume.pdf"
                   className="text-black dark:text-white px-4 py-2 rounded-md transition-colors duration-300 border-b border-gray-200 dark:border-gray-800"
+                  target="_blank"
                   download
                 >
                   Download Resume

@@ -22,7 +22,8 @@ const skillsData = [
                 { name: "JavaScript", image: '/icons/javascript.png', rating: 90 },
                 { name: "TypeScript", image: '/icons/typescript.png', rating: 80 },
                 { name: "PHP", image: '/icons/php.png', rating: 90 },
-                { name: "Python", image: '/icons/python.png', rating: 65 },
+                { name: "Java", image: '/icons/java.png', rating: 70 },
+                { name: "Python", image: '/icons/python.png', rating: 60 },
                 { name: "SQL", image: '/icons/mysql.png', rating: 90 },
             ]
     },

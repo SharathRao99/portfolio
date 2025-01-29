@@ -12,7 +12,7 @@ export default function SkillsHero() {
                             Things I&apos;m Good At
                         </h2>
                         <p className="text-gray-800 dark:text-gray-100 space-y-4">
-                            I&apos;ve spent the last 2 years turning complex problems into elegant solutions, working across the entire development spectrum from intuitive user interfaces to robust backend systems. I&apos;m driven by the endless possibilities that technology offers and the rapid evolution of the development landscape.
+                            I&apos;ve spent the last 2+ years turning complex problems into elegant solutions, working across the entire development spectrum from intuitive user interfaces to robust backend systems. I&apos;m driven by the endless possibilities that technology offers and the rapid evolution of the development landscape.
                         </p>
                     </div>
                 </Card>
