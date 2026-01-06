@@ -15,7 +15,7 @@ export default function Hero() {
                                 Hello, Know me better
                             </h2>
                             <p className="text-gray-800 dark:text-gray-100">
-                                Full-Stack Developer with 2+ years of hands-on experience in frontend, backend, and mobile app development. Proficient in modern technologies including React.js, Next.js, Node.js, Express.js, React Native, SQL, and NoSQL databases. Experienced in implementing authentication systems and payment gateways. Demonstrated ability to deliver end-to-end solutions while maintaining clean code practices.
+                                Full-Stack Developer with 3+ years of hands-on experience in frontend, backend, and mobile app development. Proficient in modern technologies including React.js, Next.js, Node.js, Express.js, React Native, SQL, and NoSQL databases. Experienced in implementing authentication systems and payment gateways. Demonstrated ability to deliver end-to-end solutions while maintaining clean code practices.
                             </p>
                             <Link href="/about" className="w-max bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-4 py-2 rounded-md transition-colors duration-300">
                                 Know More
