@@ -27,9 +27,9 @@ export const skillsCardData = {
         { name: "Next.js", src: '/icons/next.png' },
         { name: "TypeScript", src: '/icons/typescript.png' },
         { name: "Node.js", src: '/icons/nodejs.png' },
-        { name: "Firebase", src: '/icons/firebase.png' },
         { name: "Git", src: '/icons/git.png', },
         { name: "MySQL", src: '/icons/mysql.png' },
+        { name: "MongoDB", src: '/icons/mongodb.png' },
         { name: "PHP", src: '/icons/php.png' },
         { name: "Tailwind", src: '/icons/tailwind.png', },
     ]
@@ -53,7 +53,6 @@ export const skillsPageData = [
                 { name: "Node.js", image: '/icons/nodejs.png', rating: 85 },
                 { name: "Redux", image: '/icons/redux.png', rating: 65 },
                 { name: "Tailwind", image: '/icons/tailwind.png', rating: 90 },
-                { name: "Bootstrap", image: '/icons/bootstrap.png', rating: 60 },
             ]
     },
     {
@@ -78,6 +77,13 @@ export const skillsPageData = [
         title: "Stylesheet Languages",
         skillSets: [
             { name: "CSS3", image: '/icons/css3.png', rating: 85 },
+        ]
+    },
+    {
+        title: "Databases",
+        skillSets: [
+            { name: "MySQL", image: '/icons/mysql.png', rating: 90 },
+            { name: "MongoDB", image: '/icons/mongodb.png', rating: 85 },
         ]
     },
     {

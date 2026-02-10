@@ -1,3 +1,5 @@
+"use client";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Card from "@/components/Card";
 import SectionWrapper from "@/components/SectionWrapper";
@@ -38,10 +40,13 @@ export default function SkillsStructure({ title, skillSets }: { title: title, sk
                                         />
                                     </div>
                                     <div className="w-3/4 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                        <div
+                                        <motion.div
                                             className={`${getProgressColor(skill.rating)} h-2.5 rounded-full`}
-                                            style={{ width: `${skill.rating}%` }}
-                                        ></div>
+                                            initial={{ width: 0 }}
+                                            whileInView={{ width: `${skill.rating}%` }}
+                                            transition={{ duration: 0.8, ease: "easeOut" }}
+                                            viewport={{ once: true }}
+                                        />
                                     </div>
                                 </div>
                             ))}
