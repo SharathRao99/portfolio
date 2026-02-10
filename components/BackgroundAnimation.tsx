@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { MotionValue, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useTheme } from "next-themes";
 
 export default function BackgroundAnimation() {
@@ -86,8 +86,8 @@ function Dot({
     id: number;
     baseX: number;
     baseY: number;
-    mouseX: any;
-    mouseY: any;
+    mouseX: MotionValue<number>;
+    mouseY: MotionValue<number>;
     theme: string | undefined;
 }) {
     const baseColor = theme === "dark" ? "#475569" : "#cbd5e1"; // slate-600 : slate-300
@@ -103,10 +103,8 @@ function Dot({
     const activeColor = colors[id % colors.length];
 
     const x = useTransform([mouseX, mouseY], ([mx, my]) => {
-        // @ts-ignore
-        const dx = mx - baseX;
-        // @ts-ignore
-        const dy = my - baseY;
+        const dx = (mx as number) - baseX;
+        const dy = (my as number) - baseY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const maxDistance = 200; // Radius of effect
 
@@ -124,10 +122,8 @@ function Dot({
     });
 
     const y = useTransform([mouseX, mouseY], ([mx, my]) => {
-        // @ts-ignore
-        const dx = mx - baseX;
-        // @ts-ignore
-        const dy = my - baseY;
+        const dx = (mx as number) - baseX;
+        const dy = (my as number) - baseY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const maxDistance = 200; // Radius of effect
 
@@ -144,11 +140,12 @@ function Dot({
         }
     });
 
+    const springX = useSpring(x, { stiffness: 150, damping: 20 });
+    const springY = useSpring(y, { stiffness: 150, damping: 20 });
+
     const backgroundColor = useTransform([mouseX, mouseY], ([mx, my]) => {
-        // @ts-ignore
-        const dx = mx - baseX;
-        // @ts-ignore
-        const dy = my - baseY;
+        const dx = (mx as number) - baseX;
+        const dy = (my as number) - baseY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const maxDistance = 200;
 
@@ -162,9 +159,9 @@ function Dot({
     return (
         <motion.div
             style={{
-                x: useSpring(x, { stiffness: 150, damping: 20 }),
-                y: useSpring(y, { stiffness: 150, damping: 20 }),
-                backgroundColor: backgroundColor // animate directly
+                x: springX,
+                y: springY,
+                backgroundColor,
             }}
             className="absolute h-1.5 w-1.5 rounded-full opacity-30 transition-colors duration-200"
         />
