@@ -166,7 +166,7 @@ function Dot({
                 y: useSpring(y, { stiffness: 150, damping: 20 }),
                 backgroundColor: backgroundColor // animate directly
             }}
-            className="absolute h-1.5 w-1.5 rounded-full opacity-40 transition-colors duration-200"
+            className="absolute h-1.5 w-1.5 rounded-full opacity-30 transition-colors duration-200"
         />
     );
 }

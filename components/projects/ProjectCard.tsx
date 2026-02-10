@@ -3,6 +3,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Card from "@/components/Card";
 import SectionWrapper from "@/components/SectionWrapper";
+import { projectsCardData } from "@/lib/data";
 
 export default function ProjectCard() {
     return (
@@ -21,13 +22,13 @@ export default function ProjectCard() {
                         </motion.div>
                         <div className="w-full md:w-1/2 flex flex-col items-center md:items-start gap-6">
                             <h2 className="text-2xl text-center md:text-left font-bold text-gray-800 dark:text-gray-100">
-                                Featured Projects
+                                {projectsCardData.title}
                             </h2>
                             <p className="text-gray-800 dark:text-gray-100">
-                                Passionate about crafting innovative solutions using modern technologies like React.js, Next.js, Node.js, and cloud services. Specialized in developing scalable, user-centric applications with robust architectures and intuitive interfaces. My portfolio includes major projects such as a comprehensive Recruitment Management System, a feature-rich Digital Commerce Platform, and an advanced Parenting Control App.
+                                {projectsCardData.description}
                             </p>
-                            <Link href="/projects" className="w-max bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-4 py-2 rounded-md transition-colors duration-300">
-                                View Projects
+                            <Link href={projectsCardData.ctaLink} className="w-max bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-4 py-2 rounded-md transition-colors duration-300">
+                                {projectsCardData.ctaText}
                             </Link>
                         </div>
                     </div>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import ThemeSwitch from './ThemeSwitch';
+import { navData, personalInfo } from '@/lib/data';
 
 export default function Header() {
   const [bgColor, setBgColor] = useState('bg-pink-200/80 dark:bg-pink-900/30');
@@ -44,25 +45,25 @@ export default function Header() {
           <div className="w-full flex items-center gap-16 justify-between">
             <Link href="/">
               <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-                Sharath B C
+                {personalInfo.name}
               </h1>
             </Link>
 
             <nav className="hidden md:flex items-center gap-6">
               <ThemeSwitch />
               <Link
-                href="mailto:sharath.byadagodu@outlook.com"
+                href={personalInfo.contactLink}
                 className="bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-4 py-2 rounded-md transition-colors duration-300"
               >
-                Contact Me
+                {navData.contactText}
               </Link>
               <Link
-                href="/data/Resume_Sharath_B_C.pdf"
+                href={personalInfo.resumeLink}
                 className="bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-4 py-2 rounded-md transition-colors duration-300"
                 target="_blank"
                 download
               >
-                Download Resume
+                {navData.downloadResumeText}
               </Link>
             </nav>
           </div>
@@ -84,18 +85,18 @@ export default function Header() {
             <div className="overflow-y-auto mt-4 flex-1">
               <nav className="flex flex-col gap-4">
                 <Link
-                  href="mailto:sharath.byadagodu@outlook.com"
+                  href={personalInfo.contactLink}
                   className="text-black dark:text-white px-4 py-2 rounded-md transition-colors duration-300 border-b border-gray-200 dark:border-gray-800"
                 >
-                  Contact Me
+                  {navData.contactText}
                 </Link>
                 <Link
-                  href="/data/Resume_Sharath_B_C.pdf"
+                  href={personalInfo.resumeLink}
                   className="text-black dark:text-white px-4 py-2 rounded-md transition-colors duration-300 border-b border-gray-200 dark:border-gray-800"
                   target="_blank"
                   download
                 >
-                  Download Resume
+                  {navData.downloadResumeText}
                 </Link>
               </nav>
             </div>
