@@ -1,5 +1,7 @@
+"use client";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import Card from "@/components/Card";
 import SectionWrapper from "@/components/SectionWrapper";
 
@@ -20,6 +22,21 @@ const skills: Skill[] = [
     { name: "Tailwind", src: '/icons/tailwind.png', },
 ];
 
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+};
+
 export default function SkillsCard() {
     return (
         <SectionWrapper>
@@ -37,10 +54,17 @@ export default function SkillsCard() {
                                 Stuff I&apos;m Good At
                             </Link>
                         </div>
-                        <div className="w-full md:w-1/2 grid grid-cols-3 gap-8 p-4">
+                        <motion.div
+                            className="w-full md:w-1/2 grid grid-cols-3 gap-8 p-4"
+                            variants={containerVariants}
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true, amount: 0.2 }}
+                        >
                             {skills.map((skill, index) => (
-                                <div
+                                <motion.div
                                     key={index}
+                                    variants={itemVariants}
                                     className="w-full h-full flex flex-col items-center justify-center group relative"
                                 >
                                     <Image
@@ -52,9 +76,9 @@ export default function SkillsCard() {
                                     <span className="opacity-0 group-hover:opacity-100 absolute -bottom-6 text-sm text-gray-600 dark:text-gray-300 transition-opacity duration-300">
                                         {skill.name}
                                     </span>
-                                </div>
+                                </motion.div>
                             ))}
-                        </div>
+                        </motion.div>
                     </div>
                 </Card>
             </div>
