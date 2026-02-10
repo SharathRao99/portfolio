@@ -6,6 +6,7 @@ import "./globals.css";
 import { Providers } from "./provider";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import BackgroundAnimation from "../components/BackgroundAnimation";
 
 
 const geistSans = localFont({
@@ -34,6 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiase`}
       >
+        <BackgroundAnimation />
         <Providers>
           <Header />
           {children}
