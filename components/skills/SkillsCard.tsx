@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import AnimatedSection from "@/components/motion/AnimatedSection";
 import RevealText from "@/components/motion/RevealText";
 import MagneticButton from "@/components/motion/MagneticButton";
+import GhostWord from "@/components/motion/GhostWord";
 import { skillsCardData } from "@/lib/data";
 
 export default function SkillsCard() {
@@ -11,7 +12,8 @@ export default function SkillsCard() {
     const outerSkills = skillsCardData.skills.slice(4);
 
     return (
-        <AnimatedSection id="skills" className="py-14 md:py-24">
+        <AnimatedSection id="skills" className="relative py-14 md:py-24">
+            <GhostWord word="Skills" />
             <div className="container">
                 <div className="grid items-center gap-12 lg:grid-cols-2">
                     <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">

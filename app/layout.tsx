@@ -9,8 +9,8 @@ import Footer from "../components/Footer";
 import BackgroundAnimation from "../components/BackgroundAnimation";
 import ScrollProgress from "../components/motion/ScrollProgress";
 import SmoothScroll from "../components/motion/SmoothScroll";
-import CustomCursor from "../components/motion/CustomCursor";
 import BackToTop from "../components/motion/BackToTop";
+import CommandPalette from "../components/CommandPalette";
 import { personalInfo } from "../lib/data";
 
 const SITE_URL = "https://sharath-portfolio.vercel.app";
@@ -133,7 +133,7 @@ export default function RootLayout({
         <Providers>
           <BackgroundAnimation />
           <SmoothScroll />
-          <CustomCursor />
+          <CommandPalette />
           <ScrollProgress />
           <Header />
           <main id="content" className="flex-1 overflow-x-clip pt-28 md:pt-32">{children}</main>

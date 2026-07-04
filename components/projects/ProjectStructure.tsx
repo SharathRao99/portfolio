@@ -3,6 +3,9 @@ import { motion, type Variants } from "framer-motion";
 import RevealText from "@/components/motion/RevealText";
 import GlowCard from "@/components/motion/GlowCard";
 
+const slugify = (text: string) =>
+    text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
 interface ProjectStructureProps {
     title: string;
     description: string;
@@ -41,19 +44,32 @@ export default function ProjectStructure({
         // the viewport, so pinning them buries content
         <section className="mb-10 md:sticky md:mb-16" style={{ top: `calc(7rem + ${index * 1.25}rem)` }}>
             <div className="container">
-                {/* opaque backing so stacked cards don't show through each other */}
-                <div className="rounded-3xl bg-background/90 shadow-card-float backdrop-blur-2xl">
-                <GlowCard contentClassName="p-6 md:p-12">
-                    <div className="relative">
+                {/* fully opaque backing so stacked cards never bleed through
+                    the one sliding over them during the sticky-deck scroll */}
+                <div className="rounded-3xl bg-background shadow-card-float">
+                <GlowCard contentClassName="p-0">
+                    {/* editor-tab window chrome */}
+                    <div className="flex items-center gap-2 border-b border-black/5 px-5 py-3.5 dark:border-white/5">
+                        <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+                        <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+                        <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+                        <span className="ml-3 truncate font-mono text-xs text-muted">
+                            {slugify(title)}.md
+                        </span>
+                        <span className="ml-auto hidden font-mono text-[10px] uppercase tracking-[0.25em] text-muted sm:block">
+                            case study {String(index + 1).padStart(2, "0")}
+                        </span>
+                    </div>
+
+                    <div className="relative p-6 md:p-12 md:pt-10">
                         {/* oversized ghost numeral */}
                         <span
                             aria-hidden
-                            className="pointer-events-none absolute -top-8 right-0 select-none text-[7rem] font-black leading-none tracking-tighter opacity-[0.06] md:-top-12 md:text-[12rem]"
+                            className="pointer-events-none absolute -z-10 right-2 top-0 select-none text-[7rem] font-black leading-none tracking-tighter opacity-[0.06] md:text-[11rem]"
                         >
                             {String(index + 1).padStart(2, "0")}
                         </span>
 
-                        <p className="eyebrow mb-4">Case study {String(index + 1).padStart(2, "0")}</p>
                         <RevealText
                             as="h2"
                             text={title}

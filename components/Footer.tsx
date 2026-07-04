@@ -3,6 +3,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import RevealText from "@/components/motion/RevealText";
 import MagneticButton from "@/components/motion/MagneticButton";
+import GhostWord from "@/components/motion/GhostWord";
+import StatusBar from "@/components/StatusBar";
 import { personalInfo } from "@/lib/data";
 
 export default function Footer() {
@@ -14,6 +16,8 @@ export default function Footer() {
                 className="pointer-events-none absolute inset-x-0 bottom-0 h-64 opacity-70"
                 style={{ background: "radial-gradient(ellipse 60% 100% at 50% 100%, var(--glow-2), transparent 70%)" }}
             />
+
+            <GhostWord word="Contact" className="top-8" />
 
             <div className="container relative py-16 md:py-24">
                 <div className="flex flex-col items-center gap-8 text-center">
@@ -47,6 +51,8 @@ export default function Footer() {
                     </div>
                 </div>
             </div>
+
+            <StatusBar />
         </footer>
     );
 }

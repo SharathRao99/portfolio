@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { AnimatePresence, motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import ThemeSwitch from './ThemeSwitch'
+import { openPalette } from './CommandPalette'
 import { navData, personalInfo } from '@/lib/data'
 
 const navLinks = [
@@ -83,6 +84,13 @@ export default function Header() {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
+            <button
+              onClick={openPalette}
+              aria-label="Open command palette"
+              className="glass-light flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-[11px] text-muted transition-colors duration-300 hover:text-foreground"
+            >
+              <span>⌘</span>K
+            </button>
             <ThemeSwitch />
             <Link
               href={personalInfo.contactLink}
@@ -102,6 +110,13 @@ export default function Header() {
           </div>
 
           <div className="flex items-center gap-3 md:hidden">
+            <button
+              onClick={openPalette}
+              aria-label="Open command palette"
+              className="glass-light flex h-10 w-10 items-center justify-center rounded-full font-mono text-xs text-muted"
+            >
+              &gt;_
+            </button>
             <ThemeSwitch />
             <button
               aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
@@ -132,9 +147,12 @@ export default function Header() {
             animate={{ opacity: 1, clipPath: 'circle(150% at 100% 0%)' }}
             exit={{ opacity: 0, clipPath: 'circle(0% at 100% 0%)' }}
             transition={{ duration: 0.55, ease: [0.32, 0.72, 0, 1] }}
-            className="fixed inset-0 z-[60] flex flex-col justify-between bg-background/95 px-8 pb-12 pt-32 backdrop-blur-2xl md:hidden"
+            // z-40: stays *below* the header (z-50), so the hamburger/close
+            // toggle and the rest of the header bar remain visible and
+            // clickable while the menu is open
+            className="fixed inset-0 z-40 flex flex-col justify-between bg-background/95 px-8 pb-12 pt-32 backdrop-blur-2xl md:hidden"
           >
-            <nav className="flex flex-col gap-2">
+            <nav className="flex flex-col gap-1">
               {navLinks.map((link, i) => (
                 <motion.div
                   key={link.href}
@@ -145,7 +163,7 @@ export default function Header() {
                   <Link
                     href={link.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block py-2 text-4xl font-bold tracking-tight transition-colors ${
+                    className={`block py-1 text-xl font-bold tracking-tight transition-colors ${
                       pathname === link.href ? 'text-gradient' : 'text-foreground'
                     }`}
                   >

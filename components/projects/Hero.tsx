@@ -1,5 +1,6 @@
 import AnimatedSection from "@/components/motion/AnimatedSection";
 import RevealText from "@/components/motion/RevealText";
+import GhostWord from "@/components/motion/GhostWord";
 
 const stats = [
     { value: "20+", label: "Products shipped" },
@@ -9,7 +10,8 @@ const stats = [
 
 export default function ProjectsHero() {
     return (
-        <AnimatedSection className="py-10 md:py-16">
+        <AnimatedSection className="relative py-10 md:py-16">
+            <GhostWord word="Work" />
             <div className="container">
                 <p className="eyebrow mb-5">Projects</p>
                 <RevealText

@@ -1,9 +1,11 @@
 import AnimatedSection from "@/components/motion/AnimatedSection";
 import RevealText from "@/components/motion/RevealText";
+import GhostWord from "@/components/motion/GhostWord";
 
 export default function SkillsHero() {
     return (
-        <AnimatedSection className="py-10 md:py-16">
+        <AnimatedSection className="relative py-10 md:py-16">
+            <GhostWord word="Skills" />
             <div className="container">
                 <p className="eyebrow mb-5">Skills</p>
                 <RevealText
