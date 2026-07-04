@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
     title: 'Skills',
     description: 'Expertise in modern web technologies including React.js, Next.js, Node.js, TypeScript, and cloud services.',
+    alternates: { canonical: '/skills' },
     openGraph: {
         title: 'Skills & Expertise | Sharath B C',
         description: 'See my technical skills stack, from frontend frameworks to backend systems and databases.',

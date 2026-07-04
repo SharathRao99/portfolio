@@ -1,29 +1,83 @@
+"use client";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import RevealText from "@/components/motion/RevealText";
+import MagneticButton from "@/components/motion/MagneticButton";
+import GhostWord from "@/components/motion/GhostWord";
+import StatusBar from "@/components/StatusBar";
+import { personalInfo } from "@/lib/data";
 
 export default function Footer() {
     return (
-        <section className="py-6 mt-6 border-t border-gray-200 dark:border-gray-700 shadow-sm">
-            <footer key="footer" className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-center">
-                <h5 className="text-lg font-bold"> Love to learn new things ❤️ </h5>
-                <div className="flex gap-4 items-center">
-                    <Link
-                        href="mailto:sharath.byadagodu@outlook.com"
-                        target="_blank"
-                        className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center"
+        <footer className="relative mt-16 overflow-hidden border-t border-black/10 dark:border-white/10">
+            {/* closing glow */}
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-64 opacity-70"
+                style={{ background: "radial-gradient(ellipse 60% 100% at 50% 100%, var(--glow-2), transparent 70%)" }}
+            />
+
+            <GhostWord word="Contact" className="top-8" />
+
+            <div className="container relative py-16 md:py-24">
+                <div className="flex flex-col items-center gap-8 text-center">
+                    <p className="eyebrow">Get in touch</p>
+                    <RevealText
+                        as="h2"
+                        text="Let's build something together."
+                        className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl"
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3, duration: 0.6 }}
                     >
-                        <MailSvg className="w-5 h-5 text-gray-800 dark:text-blue-500" />
-                    </Link>
-                    <Link
-                        href="https://www.linkedin.com/in/sharath-b-c-45ba01203"
-                        target="_blank"
-                        className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center"
-                    >
-                        <LinkedInSvg className="w-5 h-5 text-gray-800 dark:text-blue-500" />
-                    </Link>
+                        <MagneticButton href={personalInfo.contactLink}>
+                            {personalInfo.email}
+                        </MagneticButton>
+                    </motion.div>
                 </div>
-            </footer>
-        </section>
-    )
+
+                <div className="mt-16 flex flex-col items-center justify-between gap-6 border-t border-black/10 pt-8 dark:border-white/10 md:flex-row">
+                    <h5 className="text-sm font-medium text-muted">Love to learn new things ❤️</h5>
+                    <div className="flex items-center gap-3">
+                        <SocialLink href={personalInfo.contactLink} label="Email">
+                            <MailSvg className="h-5 w-5" />
+                        </SocialLink>
+                        <SocialLink href="https://www.linkedin.com/in/sharath-b-c-45ba01203" label="LinkedIn">
+                            <LinkedInSvg className="h-5 w-5" />
+                        </SocialLink>
+                    </div>
+                </div>
+            </div>
+
+            <StatusBar />
+        </footer>
+    );
+}
+
+function SocialLink({
+    href,
+    label,
+    children,
+}: {
+    href: string;
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <motion.div whileHover={{ scale: 1.15, rotate: 6 }} whileTap={{ scale: 0.92 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
+            <Link
+                href={href}
+                target="_blank"
+                aria-label={label}
+                className="glass-light flex h-11 w-11 items-center justify-center rounded-full transition-shadow duration-300 hover:shadow-glow-sm"
+            >
+                {children}
+            </Link>
+        </motion.div>
+    );
 }
 
 function MailSvg({ className }: { className: string }) {
