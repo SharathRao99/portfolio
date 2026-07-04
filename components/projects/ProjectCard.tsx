@@ -142,10 +142,38 @@ function ProjectShowcase() {
                     <div className="glass-strong rounded-[1.4rem] p-2 shadow-card-float animate-float-y">
                         <div className="space-y-2 rounded-[1rem] bg-gradient-to-b from-indigo-500/25 to-fuchsia-500/25 p-3">
                             <div className="mx-auto h-1 w-8 rounded-full bg-current opacity-20" />
-                            <div className="h-10 rounded-lg bg-gradient-to-br from-cyan-400/50 to-indigo-400/50" />
-                            <div className="h-1.5 w-full rounded-full bg-current opacity-15" />
-                            <div className="h-1.5 w-3/4 rounded-full bg-current opacity-10" />
-                            <div className="h-6 rounded-lg bg-current opacity-10" />
+
+                            {/* app identity — Monarch AI parental control */}
+                            <div className="flex items-center gap-1">
+                                <span className="flex h-4 w-4 items-center justify-center rounded-md bg-gradient-to-br from-amber-400/60 to-red-400/60 text-[8px]">
+                                    🛡️
+                                </span>
+                                <span className="text-[8px] font-bold">Monarch</span>
+                            </div>
+
+                            {/* screen time stat */}
+                            <div>
+                                <p className="text-sm font-bold leading-none">2h 14m</p>
+                                <p className="text-[7px] text-muted">today</p>
+                            </div>
+
+                            {/* daily limit usage bar */}
+                            <div className="space-y-1">
+                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-current/10">
+                                    <div className="h-full w-4/5 rounded-full bg-gradient-to-r from-amber-400 to-red-400" />
+                                </div>
+                                <p className="text-[7px] text-muted">80% used</p>
+                            </div>
+
+                            {/* location + blocked-apps badges */}
+                            <div className="flex items-center justify-between gap-1">
+                                <span className="glass-light truncate rounded-full px-1.5 py-0.5 text-[7px]">
+                                    📍 Home
+                                </span>
+                                <span className="shrink-0 rounded-full bg-red-500/20 px-1.5 py-0.5 text-[7px] font-semibold text-red-400">
+                                    3 blocked
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>

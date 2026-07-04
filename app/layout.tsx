@@ -11,6 +11,7 @@ import ScrollProgress from "../components/motion/ScrollProgress";
 import SmoothScroll from "../components/motion/SmoothScroll";
 import BackToTop from "../components/motion/BackToTop";
 import CommandPalette from "../components/CommandPalette";
+import WebMCPTools from "../components/WebMCPTools";
 import { personalInfo } from "../lib/data";
 
 const SITE_URL = "https://sharath-portfolio.vercel.app";
@@ -134,6 +135,7 @@ export default function RootLayout({
           <BackgroundAnimation />
           <SmoothScroll />
           <CommandPalette />
+          <WebMCPTools />
           <ScrollProgress />
           <Header />
           <main id="content" className="flex-1 overflow-x-clip pt-28 md:pt-32">{children}</main>
