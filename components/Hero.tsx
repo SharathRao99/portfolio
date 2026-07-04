@@ -1,166 +1,279 @@
 "use client";
-import Link from "next/link";
-import Card from "./Card";
-import SectionWrapper from "./SectionWrapper";
-import { heroData } from "@/lib/data";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import RevealText from "@/components/motion/RevealText";
+import MagneticButton from "@/components/motion/MagneticButton";
+import MouseTilt from "@/components/motion/MouseTilt";
+import { scrollToTarget } from "@/components/motion/SmoothScroll";
+import { heroData, personalInfo, navData } from "@/lib/data";
+
 export default function Hero() {
+    const sectionRef = useRef<HTMLElement>(null);
+    // hero gently recedes as the next section takes over
+    const { scrollYProgress } = useScroll({
+        target: sectionRef,
+        offset: ["start start", "end start"],
+    });
+    const exitScale = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
+    const exitOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.25]);
+    const exitY = useTransform(scrollYProgress, [0, 1], [0, -60]);
+
     return (
-        <SectionWrapper>
-            <div className="container mx-auto">
-                <Card>
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="flex-1 w-full h-96">
-                            <MeSvg />
-                        </div>
-                        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start gap-6">
-                            <h2 className="text-2xl text-center md:text-left font-bold text-gray-800 dark:text-gray-100">
-                                {heroData.title}
-                            </h2>
-                            <p className="text-gray-800 dark:text-gray-100">
-                                {heroData.description}
-                            </p>
-                            <Link href={heroData.ctaLink} className="w-max bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-4 py-2 rounded-md transition-colors duration-300">
-                                {heroData.ctaText}
-                            </Link>
-                        </div>
-                    </div>
-                </Card>
-            </div>
-        </SectionWrapper>
+        <section ref={sectionRef} className="container relative flex min-h-[calc(100dvh-9rem)] flex-col justify-center">
+            <motion.div
+                style={{ scale: exitScale, opacity: exitOpacity, y: exitY }}
+                className="grid items-center gap-12 will-change-transform lg:grid-cols-[1.1fr_0.9fr]"
+            >
+                <div className="order-2 flex flex-col items-center gap-7 text-center lg:order-1 lg:items-start lg:text-left">
+                    <motion.p
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.6 }}
+                        className="eyebrow"
+                    >
+                        {heroData.title}
+                    </motion.p>
+
+                    <h1 className="text-5xl font-bold leading-[1.04] tracking-tight md:text-7xl">
+                        <RevealText text={personalInfo.name.split(" ")[0]} delay={0.3} />
+                        <br />
+                        {/* single continuous gradient — bg-clip-text can't survive
+                            per-word overflow masks, so this line wipes in via clip-path */}
+                        <motion.span
+                            initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+                            animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
+                            transition={{ delay: 0.55, duration: 0.9, ease: [0.65, 0, 0.35, 1] }}
+                            className="text-gradient inline-block pb-[0.1em]"
+                        >
+                            builds digital products.
+                        </motion.span>
+                    </h1>
+
+                    <motion.p
+                        initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
+                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                        transition={{ delay: 0.8, duration: 0.7 }}
+                        className="max-w-xl text-base leading-relaxed text-muted md:text-lg"
+                    >
+                        {heroData.description}
+                    </motion.p>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1, duration: 0.6 }}
+                        className="flex flex-wrap items-center justify-center gap-4 lg:justify-start"
+                    >
+                        <MagneticButton href={heroData.ctaLink}>{heroData.ctaText}</MagneticButton>
+                        <MagneticButton href={personalInfo.contactLink} variant="ghost">
+                            {navData.contactText}
+                        </MagneticButton>
+                    </motion.div>
+                </div>
+
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: 32 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 0.5, type: "spring", stiffness: 80, damping: 18 }}
+                    className="order-1 w-full px-2 pb-10 pt-4 lg:order-2 lg:px-0 lg:py-0"
+                >
+                    <HeroShowcase />
+                </motion.div>
+            </motion.div>
+
+            {/* clickable scroll cue */}
+            <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.6 }}
+                onClick={() => scrollToTarget("#skills")}
+                aria-label="Scroll to skills"
+                className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 cursor-pointer md:block"
+            >
+                <div className="flex h-10 w-6 items-start justify-center rounded-full border border-black/20 p-1.5 text-muted transition-colors duration-300 hover:border-indigo-400/60 dark:border-white/20">
+                    <span className="h-2 w-[3px] rounded-full bg-current animate-scroll-hint" />
+                </div>
+            </motion.button>
+        </section>
     );
 }
 
-function MeSvg() {
+/* ---------- typing sequence ---------- */
+
+// plain-text mirror of the syntax-colored lines below; drives the typewriter
+const CODE_LINES = [
+    "const sharath = {",
+    '  role: "Full-Stack Developer",',
+    '  experience: "3+ years",',
+    '  stack: ["React", "Next.js", "Node"],',
+    '  ships: () => "end-to-end products",',
+    "};",
+];
+const TOTAL_CHARS = CODE_LINES.reduce((sum, line) => sum + line.length, 0);
+
+function useTypewriter() {
+    const [typed, setTyped] = useState(0);
+
+    useEffect(() => {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            setTyped(TOTAL_CHARS);
+            return;
+        }
+        let count = 0;
+        const timer = setInterval(() => {
+            // 2–3 chars per tick ≈ human-fast typing, ~2s total
+            count = Math.min(count + 2 + Math.round(Math.random()), TOTAL_CHARS);
+            setTyped(count);
+            if (count >= TOTAL_CHARS) clearInterval(timer);
+        }, 28);
+        return () => clearInterval(timer);
+    }, []);
+
+    // chars already typed at the start of each line
+    let consumed = 0;
+    const lines = CODE_LINES.map((line) => {
+        const visible = Math.max(0, Math.min(line.length, typed - consumed));
+        consumed += line.length;
+        return { text: line, visible, done: visible >= line.length };
+    });
+    const activeLine = lines.findIndex((l) => !l.done);
+    return { lines, activeLine, done: typed >= TOTAL_CHARS };
+}
+
+/**
+ * Layered 3D composition: a glass code editor that types itself out,
+ * then a floating terminal "ships the build" — write code → ship it.
+ * Each layer sits at a different translateZ depth inside the cursor tilt.
+ */
+function HeroShowcase() {
+    const { lines, activeLine, done } = useTypewriter();
+
+    // syntax-colored renderings shown once a line finishes typing
+    const colored = [
+        <><span className="text-fuchsia-500 dark:text-fuchsia-400">const</span> <span className="text-cyan-600 dark:text-cyan-300">sharath</span> = {"{"}</>,
+        <>  role: <Str>&quot;Full-Stack Developer&quot;</Str>,</>,
+        <>  experience: <Str>&quot;3+ years&quot;</Str>,</>,
+        <>  stack: [<Str>&quot;React&quot;</Str>, <Str>&quot;Next.js&quot;</Str>, <Str>&quot;Node&quot;</Str>],</>,
+        <>  ships: () <span className="text-fuchsia-500 dark:text-fuchsia-400">=&gt;</span> <Str>&quot;end-to-end products&quot;</Str>,</>,
+        <>{"}"};</>,
+    ];
+
     return (
-        <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 553 649"
-            xmlns="http://www.w3.org/2000/svg"
-            style={{
-                transform: "translate3d(0,0,0)",
-                contentVisibility: "visible",
-            }}
-        >
-            <style>
-                {`
-                @keyframes float {
-                    0% { transform: translateX(0px); }
-                    50% { transform: translateX(10px); }
-                    100% { transform: translateX(0px); }
-                }
-                @keyframes blink {
-                    0%, 100% { transform: scaleY(1); }
-                    50% { transform: scaleY(0.1); }
-                }
-                .floating {
-                    animation: float 6s ease-in-out infinite;
-                }
-                .eye {
-                    animation: blink 3s ease-in-out infinite;
-                    transform-origin: center;
-                }
-                `}
-            </style>
-            <defs>
-                <clipPath id="a">
-                    <path d="M0 0h553v649H0z" />
-                </clipPath>
-            </defs>
-            <g clipPath="url(#a)" className="floating">
-                <g
-                    style={{
-                        display: "block",
-                    }}
+        <MouseTilt className="mx-auto w-full max-w-md" maxTilt={7}>
+            <div className="relative" style={{ transformStyle: "preserve-3d" }}>
+                {/* ambient glow behind the whole stack */}
+                <div
+                    aria-hidden
+                    className="absolute -inset-8 opacity-70 blur-2xl"
+                    style={{ background: "radial-gradient(circle at 50% 40%, var(--glow-2), transparent 65%)" }}
+                />
+
+                {/* code editor */}
+                <div className="glass relative overflow-hidden rounded-3xl shadow-card-float">
+                    <div className="flex items-center gap-2 border-b border-black/5 px-5 py-3.5 dark:border-white/5">
+                        <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+                        <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+                        <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+                        <span className="ml-3 font-mono text-xs text-muted">sharath.ts</span>
+                    </div>
+                    <pre className="overflow-x-auto p-4 font-mono text-[11px] leading-6 sm:p-5 sm:text-[13px] sm:leading-7 md:text-sm">
+                        <code>
+                            {lines.map((line, i) => (
+                                <span key={i} className="block whitespace-pre">
+                                    <span className="mr-4 inline-block w-4 select-none text-right text-muted opacity-50">
+                                        {i + 1}
+                                    </span>
+                                    {line.done ? colored[i] : line.text.slice(0, line.visible)}
+                                    {(i === activeLine || (done && i === lines.length - 1)) && <Caret />}
+                                </span>
+                            ))}
+                        </code>
+                    </pre>
+                </div>
+
+                {/* floating terminal — enters only after the code finishes typing.
+                    Outer div owns depth, inner owns the float animation (a CSS
+                    transform animation would clobber translateZ). */}
+                <div
+                    className="absolute -bottom-10 left-0 w-[75%] md:-left-10"
+                    style={{ transform: "translateZ(50px)" }}
                 >
-                    <path
-                        fill="none"
-                        stroke="#3A3B3A"
-                        strokeMiterlimit={10}
-                        strokeWidth={39}
-                        d="M418.255 576.92c-15.972-6.428-29.769-13.172-41.561-20.312l.02-.016c-2.673-1.619-5.275-3.253-7.745-4.914-13.174-8.862-23.451-18.337-31.164-28.556l.029-.015c-10.908-14.454-16.675-30.4-18.111-48.25l-.002-.017a112.439 112.439 0 0 1-.265-4.582l-.023-.573a124.09 124.09 0 0 1 .054-9.497c.016-.366.038-.733.057-1.099.063-1.225.143-2.458.239-3.699.034-.437.066-.872.104-1.311.138-1.584.294-3.178.485-4.79h-86.53c.191 1.608.347 3.195.484 4.775.037.431.069.859.102 1.288.097 1.244.178 2.48.241 3.707.019.356.04.714.055 1.067.14 3.235.163 6.413.058 9.532l-.015.39c-.73 19.656-6.429 37.047-18.121 52.691a.67.67 0 0 0 .037.02c-7.742 10.358-18.107 19.951-31.437 28.919l.003-.003c-2.471 1.663-5.075 3.297-7.75 4.918l.02.015c-11.791 7.141-25.588 13.884-41.559 20.312-78.69 31.668-89.246 66.215-89.246 66.215H507.5s-10.556-34.547-89.245-66.215z"
-                    />
-                    <path
-                        fill="#616261"
-                        d="M418.255 576.92c-80.684-26.174-104.6-71.013-97.883-127.631h-86.53c6.717 56.618-17.703 99.95-97.882 127.631C13.5 619.199 42.714 698.135 42.714 698.135l223.607 43 46.906-32 199.273 5s33-95.936-94.245-137.215z"
-                    />
-                    <path
-                        fill="#3A3B3A"
-                        d="m177.5 556.593 2.333 1.863c29.573 23.611 63.209 36.091 97.274 36.091 34.064 0 67.701-12.48 97.273-36.092l2.334-1.863c-2.673-1.619-5.276-3.253-7.746-4.914-27.273 21.775-58.563 34.195-91.861 34.195s-64.588-12.42-91.861-34.195l.004-.003c-2.471 1.663-5.075 3.297-7.75 4.918z"
-                    />
-                    <path
-                        fill="#DFB092"
-                        d="m337.805 523.122.029-.015c-10.908-14.454-16.675-30.4-18.111-48.25l-.001-.017a110.658 110.658 0 0 1-.266-4.582l-.023-.574c-.105-3.108-.084-6.274.054-9.497.016-.365.038-.732.057-1.098.063-1.225.143-2.458.24-3.699.034-.437.065-.872.104-1.311.137-1.584.293-3.178.484-4.79h-86.529c.19 1.607.346 3.195.483 4.774.038.432.069.86.102 1.288.097 1.245.178 2.481.241 3.708.019.356.04.713.055 1.067.141 3.235.164 6.413.058 9.532l-.015.39c-.73 19.656-6.428 37.047-18.121 52.691l.037.02c-7.742 10.358-18.107 19.952-31.437 28.919 27.273 21.775 58.563 34.195 91.861 34.195 33.299 0 64.588-12.42 91.861-34.195-13.174-8.863-23.45-18.337-31.163-28.556z"
-                    />
-                </g>
-                <g
-                    style={{
-                        display: "block",
-                    }}
-                >
-                    <path
-                        fill="#3A3B3A"
-                        d="m162.741 118.286 3.418 192.122a5.529 5.529 0 0 1-5.75 5.625l-19.016-.766a5.53 5.53 0 0 0-5.75 5.305l-2.232 55.38a5.548 5.548 0 0 0 1.462 3.977l26.065 28.252a5.528 5.528 0 0 1 1.461 3.977l-1.235 30.638a5.536 5.536 0 0 0 1.445 3.952l70.58 77.308a5.536 5.536 0 0 0 3.866 1.797l89.8 3.619a5.52 5.52 0 0 0 3.973-1.463l77.358-71.365a5.524 5.524 0 0 0 1.776-3.841l1.202-29.819c.06-1.468.7-2.848 1.776-3.845l27.84-25.682a5.538 5.538 0 0 0 1.778-3.843l2.28-56.582a5.531 5.531 0 0 0-5.305-5.75l-18.946-.764a5.53 5.53 0 0 1-5.304-5.75l2.466-61.192a5.63 5.63 0 0 1 .12-.948l14.193-65.641a5.521 5.521 0 0 0-.724-4.117l-39.38-62.528c-2.86-4.54-9.86-2.755-10.2 2.602-.342 5.448-7.535 7.16-10.296 2.446l-23.82-40.682c-2.075-3.54-7.149-3.673-9.401-.24l-6.026 9.183c-2.137 3.259-6.882 3.342-9.139.163l-41.83-59.04c-3.074-4.334-9.896-2.266-10.04 3.047l-1.43 51.518c-.138 4.95-6.212 7.24-9.585 3.612l-18.483-19.903c-3.157-3.403-8.85-1.634-9.528 2.962L225 130.922c-.54 3.675-4.473 5.786-7.831 4.202l-46.539-21.94c-3.707-1.747-7.964 1.004-7.889 5.102z"
-                    />
-                    <path
-                        fill="#FFD0AC"
-                        d="m235.054 192.51 33.463 33.725a9.171 9.171 0 0 0 10.417 1.844l72.016-33.809a9.174 9.174 0 0 1 9.946 1.404l36.3 31.793a9.173 9.173 0 0 1 3.125 7.273l-8.38 207.967a9.194 9.194 0 0 1-2.755 6.195l-63.8 62.404a9.176 9.176 0 0 1-6.787 2.61l-71.35-2.875a9.173 9.173 0 0 1-6.48-3.064l-61.64-69.127a9.19 9.19 0 0 1-2.317-6.477l8.292-205.765a9.17 9.17 0 0 1 3.36-6.736l34.263-28.005a9.183 9.183 0 0 1 12.327.644z"
-                    />
-                    <path
-                        fill="#3A3B3A"
-                        fillOpacity={0.25}
-                        d="M183.25 309.843s23.314 23.71 19.094 55.915c-.012.092-.028.184-.043.277-.357 1.952-4.367 24.975.63 43.944.624 2.364 3.073 3.752 5.406 3.009 17.616-5.608 89.588-24.99 156.073 7.935 2.141 1.062 4.722.12 5.723-2.045 2.519-5.462 6.241-16.748 5.118-34.291-1.548-24.157 1.577-41.075 16.779-59.22 1.749-2.089 4.977-2.055 6.65.095l8.156 10.506c.63.807.94 1.815.889 2.838l-5.86 109.215a4.266 4.266 0 0 1-1.256 2.794l-70.439 69.723a4.254 4.254 0 0 1-3.167 1.228l-70.955-2.859c-.461-.019-.91-.11-1.336-.271L219.19 505.18a4.244 4.244 0 0 1-1.862-1.374l-48.76-63.132a4.242 4.242 0 0 1-.864-3.065l14.047-127.826"
-                    />
-                    <path
-                        fill="#FFD0AC"
-                        d="m151.772 332.913 13.002.524-2.104 52.2-12.38-13.421 1.482-39.303zM413.175 343.246l14.4.58-1.644 40.799-14.462 13.342 1.706-54.72z"
-                    />
-                </g>
-                <path
-                    fill="#3A3B3A"
-                    d="m-41.676-6.192 21.645.424 46.135-8.59L27.907.956l-46.263 8.003-23.214-1.411-.106-13.74z"
-                    style={{
-                        display: "block",
-                    }}
-                    transform="rotate(2.308 -10746.323 7320.841)"
-                />
-                <path
-                    fill="#3A3B3A"
-                    d="m-28.973-3.752 57.947-5.705v14.11l-57.947 4.804V-3.752z"
-                    style={{
-                        display: "block",
-                    }}
-                    transform="rotate(2.308 -6280.908 6240.94)"
-                />
-                <path
-                    fill="#3A3B3A"
-                    d="m-27.622-9.458 57.344 5.405-1.199 13.51-58.245-4.501 2.1-14.414z"
-                    style={{
-                        display: "block",
-                    }}
-                    transform="rotate(2.308 -6084.702 8628.709)"
-                />
-                <path
-                    fill="#3A3B3A"
-                    d="M-13.811-9.158h27.622V9.158h-27.622V-9.158z"
-                    style={{
-                        display: "block",
-                    }}
-                    transform="rotate(2.308 -9196.068 7330.2) scale(.9)"
-                />
-                <g className="eye">
-                    <path
-                        fill="#3B3C3B"
-                        d="M345.193 331.292c-.474 11.77-4.846 21.15-9.761 20.952-4.917-.198-8.516-9.9-8.042-21.67.474-11.77 4.842-21.15 9.76-20.951 4.915.198 8.518 9.898 8.043 21.67z"
-                    />
-                </g>
-                <g className="eye">
-                    <path
-                        fill="#3B3C3B"
-                        d="M255.266 327.668c-.474 11.77-4.846 21.15-9.761 20.952-4.917-.198-8.516-9.9-8.042-21.67.474-11.77 4.842-21.15 9.76-20.951 4.915.198 8.518 9.898 8.043 21.67z"
-                    />
-                </g>
-            </g>
-        </svg>
-    )
+                    <motion.div
+                        initial={{ opacity: 0, y: 24, scale: 0.9 }}
+                        animate={done ? { opacity: 1, y: 0, scale: 1 } : {}}
+                        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                        className="glass-strong rounded-2xl p-4 shadow-card-float animate-float-y"
+                    >
+                        <p className="font-mono text-xs leading-6">
+                            <span className="text-emerald-500 dark:text-emerald-400">➜</span>{" "}
+                            <span className="text-muted">npm run build</span>
+                            <br />
+                            <motion.span
+                                initial={{ opacity: 0 }}
+                                animate={done ? { opacity: 1 } : {}}
+                                transition={{ delay: 0.7 }}
+                                className="inline-block"
+                            >
+                                <span className="text-emerald-500 dark:text-emerald-400">✓</span> Ready — shipped to production
+                            </motion.span>
+                        </p>
+                    </motion.div>
+                </div>
+
+                {/* status chip */}
+                <div className="absolute right-0 -top-5 md:-right-6" style={{ transform: "translateZ(70px)" }}>
+                    <div className="glass-strong rounded-full px-4 py-2 text-xs font-medium shadow-card-float animate-float-y [animation-delay:-3s]">
+                        <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+                        Open to opportunities
+                    </div>
+                </div>
+
+                {/* floating tech chips */}
+                <TechChip src="/icons/react.png" alt="React" className="-left-2 top-10 md:-left-14" z={80} delay="-1s" />
+                <TechChip src="/icons/next.png" alt="Next.js" className="-right-1 top-1/2 md:-right-12" z={60} delay="-4.5s" />
+                <TechChip src="/icons/nodejs.png" alt="Node.js" className="-bottom-14 right-6 md:-bottom-16 md:right-8" z={45} delay="-2.5s" />
+            </div>
+        </MouseTilt>
+    );
+}
+
+function Caret() {
+    return (
+        <motion.span
+            aria-hidden
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
+            className="ml-0.5 inline-block h-4 w-[7px] translate-y-[3px] bg-indigo-400"
+        />
+    );
+}
+
+function Str({ children }: { children: React.ReactNode }) {
+    return <span className="text-emerald-600 dark:text-emerald-300">{children}</span>;
+}
+
+function TechChip({
+    src,
+    alt,
+    className,
+    z,
+    delay,
+}: {
+    src: string;
+    alt: string;
+    className: string;
+    z: number;
+    delay: string;
+}) {
+    return (
+        <div className={`absolute ${className}`} style={{ transform: `translateZ(${z}px)` }}>
+            <div
+                className="glass-light flex h-12 w-12 items-center justify-center rounded-2xl shadow-card-float animate-float-y"
+                style={{ animationDelay: delay }}
+            >
+                <Image src={src} alt={alt} width={26} height={26} className="h-[26px] w-[26px] object-contain" />
+            </div>
+        </div>
+    );
 }

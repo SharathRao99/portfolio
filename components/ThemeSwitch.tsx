@@ -24,7 +24,7 @@ export default function ThemeSwitch() {
 
   if (resolvedTheme === 'dark') {
     return (
-        <button onClick={() => setTheme('light')}>
+        <button onClick={() => setTheme('light')} aria-label="Switch to light theme">
             <Sun />
         </button>
     );
@@ -32,7 +32,7 @@ export default function ThemeSwitch() {
 
   if (resolvedTheme === 'light') {
     return (
-        <button onClick={() => setTheme('dark')}>
+        <button onClick={() => setTheme('dark')} aria-label="Switch to dark theme">
             <Moon />
         </button>
     );
