@@ -1,22 +1,22 @@
-import Card from "@/components/Card";
-import SectionWrapper from "@/components/SectionWrapper";
+import AnimatedSection from "@/components/motion/AnimatedSection";
+import RevealText from "@/components/motion/RevealText";
+import GhostWord from "@/components/motion/GhostWord";
 
 export default function SkillsHero() {
     return (
-        <SectionWrapper>
-            <div className="container mx-auto">
-                <Card>
-                    <div className="flex flex-col items-center justify-between gap-4 md:gap-8">
-
-                        <h2 className="text-2xl text-center md:text-left font-bold text-gray-800 dark:text-gray-100">
-                            Things I&apos;m Good At
-                        </h2>
-                        <p className="text-gray-800 dark:text-gray-100 space-y-4">
-                            I&apos;ve spent the last 3+ years turning complex problems into elegant solutions, working across the entire development spectrum from intuitive user interfaces to robust backend systems. I&apos;m driven by the endless possibilities that technology offers and the rapid evolution of the development landscape.
-                        </p>
-                    </div>
-                </Card>
+        <AnimatedSection className="relative py-10 md:py-16">
+            <GhostWord word="Skills" />
+            <div className="container">
+                <p className="eyebrow mb-5">Skills</p>
+                <RevealText
+                    as="h1"
+                    text="Things I'm Good At"
+                    className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl"
+                />
+                <p className="mt-8 max-w-3xl text-base leading-relaxed text-muted md:text-lg">
+                    I&apos;ve spent the last 3+ years turning complex problems into elegant solutions, working across the entire development spectrum from intuitive user interfaces to robust backend systems. I&apos;m driven by the endless possibilities that technology offers and the rapid evolution of the development landscape.
+                </p>
             </div>
-        </SectionWrapper>
+        </AnimatedSection>
     );
 }

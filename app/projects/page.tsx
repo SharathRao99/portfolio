@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
     title: 'Projects',
     description: 'Explore my portfolio of projects including Recruitment Management Systems, Parental Control Apps, and E-commerce Platforms.',
+    alternates: { canonical: '/projects' },
     openGraph: {
         title: 'Projects | Sharath B C',
         description: 'Check out my latest work in Full Stack Development, featuring React, Next.js, and Node.js projects.',
@@ -20,12 +21,15 @@ export default function ProjectsPage() {
             {projectsPageData.map((project, index) => (
                 <ProjectStructure
                     key={index}
+                    index={index}
                     title={project.title}
                     description={project.description}
                     keyContributions={project.keyContributions}
                     coreFeatures={project.coreFeatures}
                 />
             ))}
+            {/* breathing room so the last stacked card can scroll clear */}
+            <div className="h-16 md:h-24" />
         </div>
     );
 }

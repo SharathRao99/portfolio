@@ -7,7 +7,14 @@ import { Providers } from "./provider";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import BackgroundAnimation from "../components/BackgroundAnimation";
+import ScrollProgress from "../components/motion/ScrollProgress";
+import SmoothScroll from "../components/motion/SmoothScroll";
+import BackToTop from "../components/motion/BackToTop";
+import CommandPalette from "../components/CommandPalette";
+import WebMCPTools from "../components/WebMCPTools";
+import { personalInfo } from "../lib/data";
 
+const SITE_URL = "https://sharath-portfolio.vercel.app";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -21,7 +28,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sharath-portfolio.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Sharath B C | Full Stack Developer",
     template: "%s | Sharath B C",
@@ -39,28 +46,21 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Sharath B C" }],
   creator: "Sharath B C",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://sharath-portfolio.vercel.app",
+    url: SITE_URL,
     title: "Sharath B C | Full Stack Developer",
     description: "Full-Stack Developer skilled in building scalable web and mobile applications using modern technologies.",
     siteName: "Sharath B C Portfolio",
-    images: [
-      {
-        url: "/opengraph-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Sharath B C - Full Stack Developer",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Sharath B C | Full Stack Developer",
     description: "Full-Stack Developer skilled in building scalable web and mobile applications.",
-    images: ["/opengraph-image.png"],
-    creator: "@sharath_bc", // Replace with actual handle if available
   },
   icons: {
     icon: "/icon.png",
@@ -80,6 +80,40 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": `${SITE_URL}/#person`,
+      name: "Sharath B C",
+      jobTitle: "Full Stack Developer",
+      email: personalInfo.email,
+      url: SITE_URL,
+      sameAs: ["https://www.linkedin.com/in/sharath-b-c-45ba01203"],
+      knowsAbout: [
+        "React.js",
+        "Next.js",
+        "Node.js",
+        "TypeScript",
+        "React Native",
+        "MySQL",
+        "MongoDB",
+        "AWS",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: "Sharath B C Portfolio",
+      description:
+        "Portfolio of Sharath B C, a Full-Stack Developer building scalable web and mobile applications.",
+      publisher: { "@id": `${SITE_URL}/#person` },
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -90,11 +124,23 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiase`}
       >
-        <BackgroundAnimation />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <a href="#content" className="skip-link">
+          Skip to content
+        </a>
         <Providers>
+          <BackgroundAnimation />
+          <SmoothScroll />
+          <CommandPalette />
+          <WebMCPTools />
+          <ScrollProgress />
           <Header />
-          {children}
+          <main id="content" className="flex-1 overflow-x-clip pt-28 md:pt-32">{children}</main>
           <Footer />
+          <BackToTop />
           <Analytics />
           <SpeedInsights />
         </Providers>
