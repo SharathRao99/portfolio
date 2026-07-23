@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import RevealText from "@/components/motion/RevealText";
 import MagneticButton from "@/components/motion/MagneticButton";
@@ -25,78 +25,73 @@ export default function Hero() {
                 style={{ scale: exitScale, opacity: exitOpacity, y: exitY }}
                 className="grid items-center gap-12 will-change-transform lg:grid-cols-[1.1fr_0.9fr]"
             >
+                {/* Above-the-fold entrance runs on CSS keyframes, not framer-motion:
+                    these elements start at opacity:0, and anything hidden until
+                    hydration cannot be an LCP candidate. Same choreography, but it
+                    begins at first paint. */}
                 <div className="order-2 flex flex-col items-center gap-7 text-center lg:order-1 lg:items-start lg:text-left">
-                    <motion.p
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2, duration: 0.6 }}
-                        className="eyebrow"
-                    >
+                    <p className="eyebrow enter-rise" style={enterDelay(0.2)}>
                         {heroData.title}
-                    </motion.p>
+                    </p>
 
                     <h1 className="text-5xl font-bold leading-[1.04] tracking-tight md:text-7xl">
-                        <RevealText text={personalInfo.name.split(" ")[0]} delay={0.3} />
+                        <RevealText text={personalInfo.name.split(" ")[0]} delay={0.3} immediate />
                         <br />
                         {/* single continuous gradient — bg-clip-text can't survive
                             per-word overflow masks, so this line wipes in via clip-path */}
-                        <motion.span
-                            initial={{ clipPath: "inset(0 100% 0 0)", opacity: 0 }}
-                            animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1 }}
-                            transition={{ delay: 0.55, duration: 0.9, ease: [0.65, 0, 0.35, 1] }}
-                            className="text-gradient inline-block pb-[0.1em]"
+                        <span
+                            className="text-gradient enter-wipe inline-block pb-[0.1em]"
+                            style={enterDelay(0.55)}
                         >
                             builds digital products.
-                        </motion.span>
+                        </span>
                     </h1>
 
-                    <motion.p
-                        initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
-                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        transition={{ delay: 0.8, duration: 0.7 }}
-                        className="max-w-xl text-base leading-relaxed text-muted md:text-lg"
+                    {/* the LCP element on mobile */}
+                    <p
+                        className="enter-rise-blur max-w-xl text-base leading-relaxed text-muted md:text-lg"
+                        style={enterDelay(0.8)}
                     >
                         {heroData.description}
-                    </motion.p>
+                    </p>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1, duration: 0.6 }}
-                        className="flex flex-wrap items-center justify-center gap-4 lg:justify-start"
+                    <div
+                        className="enter-rise flex flex-wrap items-center justify-center gap-4 lg:justify-start"
+                        style={enterDelay(1)}
                     >
                         <MagneticButton href={heroData.ctaLink}>{heroData.ctaText}</MagneticButton>
                         <MagneticButton href={personalInfo.contactLink} variant="ghost">
                             {navData.contactText}
                         </MagneticButton>
-                    </motion.div>
+                    </div>
                 </div>
 
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.92, y: 32 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: 0.5, type: "spring", stiffness: 80, damping: 18 }}
-                    className="order-1 w-full px-2 pb-10 pt-4 lg:order-2 lg:px-0 lg:py-0"
+                <div
+                    className="enter-pop order-1 w-full px-2 pb-10 pt-4 lg:order-2 lg:px-0 lg:py-0"
+                    style={enterDelay(0.5)}
                 >
                     <HeroShowcase />
-                </motion.div>
+                </div>
             </motion.div>
 
             {/* clickable scroll cue */}
-            <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.6 }}
+            <button
                 onClick={() => scrollToTarget("#skills")}
                 aria-label="Scroll to skills"
-                className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 cursor-pointer md:block"
+                style={enterDelay(1.6)}
+                className="enter-fade absolute bottom-6 left-1/2 hidden -translate-x-1/2 cursor-pointer md:block"
             >
                 <div className="flex h-10 w-6 items-start justify-center rounded-full border border-black/20 p-1.5 text-muted transition-colors duration-300 hover:border-indigo-400/60 dark:border-white/20">
                     <span className="h-2 w-[3px] rounded-full bg-current animate-scroll-hint" />
                 </div>
-            </motion.button>
+            </button>
         </section>
     );
+}
+
+/** CSS-keyframe counterpart of framer-motion's `transition.delay`. */
+function enterDelay(seconds: number): React.CSSProperties {
+    return { "--enter-delay": `${seconds}s` } as React.CSSProperties;
 }
 
 /* ---------- typing sequence ---------- */
@@ -112,23 +107,90 @@ const CODE_LINES = [
 ];
 const TOTAL_CHARS = CODE_LINES.reduce((sum, line) => sum + line.length, 0);
 
-function useTypewriter() {
+// syntax-colored renderings shown once a line finishes typing. Hoisted to
+// module scope: the elements are static, so there is no reason to rebuild
+// them on every tick of the typewriter.
+const COLORED_LINES = [
+    <><span className="text-fuchsia-500 dark:text-fuchsia-400">const</span> <span className="text-cyan-600 dark:text-cyan-300">sharath</span> = {"{"}</>,
+    <>  role: <Str>&quot;Full-Stack Developer&quot;</Str>,</>,
+    <>  experience: <Str>&quot;3+ years&quot;</Str>,</>,
+    <>  stack: [<Str>&quot;React&quot;</Str>, <Str>&quot;Next.js&quot;</Str>, <Str>&quot;Node&quot;</Str>],</>,
+    <>  ships: () <span className="text-fuchsia-500 dark:text-fuchsia-400">=&gt;</span> <Str>&quot;end-to-end products&quot;</Str>,</>,
+    <>{"}"};</>,
+];
+
+/**
+ * One line of the editor. Memoised because the typewriter ticks ~60 times and
+ * only ever changes the line currently being typed — without this, every tick
+ * re-rendered all six lines, and on a throttled phone that pile of work sat
+ * directly between first paint and the hero heading's LCP.
+ */
+const CodeLine = memo(function CodeLine({
+    index,
+    text,
+    visible,
+    done,
+    caret,
+}: {
+    index: number;
+    text: string;
+    visible: number;
+    done: boolean;
+    caret: boolean;
+}) {
+    return (
+        <span className="block whitespace-pre">
+            <span className="mr-4 inline-block w-4 select-none text-right text-muted opacity-50">
+                {index + 1}
+            </span>
+            {done ? COLORED_LINES[index] : text.slice(0, visible)}
+            {caret && <Caret />}
+        </span>
+    );
+});
+
+/**
+ * The typing animation, kept in its own component so its ~60 state updates
+ * re-render one <pre> instead of the entire showcase (images, tilt wrapper,
+ * floating chips and all). `onDone` fires once, so the parent renders twice
+ * rather than sixty times.
+ */
+function CodeEditor({ onDone }: { onDone: () => void }) {
     const [typed, setTyped] = useState(0);
 
     useEffect(() => {
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
             setTyped(TOTAL_CHARS);
+            onDone();
             return;
         }
+
+        let timer: ReturnType<typeof setInterval>;
         let count = 0;
-        const timer = setInterval(() => {
-            // 2–3 chars per tick ≈ human-fast typing, ~2s total
-            count = Math.min(count + 2 + Math.round(Math.random()), TOTAL_CHARS);
-            setTyped(count);
-            if (count >= TOTAL_CHARS) clearInterval(timer);
-        }, 28);
-        return () => clearInterval(timer);
-    }, []);
+        const type = () => {
+            timer = setInterval(() => {
+                // 2–3 chars per tick ≈ human-fast typing, ~2s total
+                count = Math.min(count + 2 + Math.round(Math.random()), TOTAL_CHARS);
+                setTyped(count);
+                if (count >= TOTAL_CHARS) {
+                    clearInterval(timer);
+                    onDone();
+                }
+            }, 28);
+        };
+
+        // Hold off until the browser has had an idle moment. The typing is
+        // decorative, and starting it while the hero is still painting made it
+        // compete with LCP on slower devices; the animation itself is unchanged.
+        const schedule =
+            window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+        const idleId = schedule(type, { timeout: 1000 }) as unknown as number;
+
+        return () => {
+            window.cancelIdleCallback?.(idleId);
+            clearInterval(timer);
+        };
+    }, [onDone]);
 
     // chars already typed at the start of each line
     let consumed = 0;
@@ -138,7 +200,24 @@ function useTypewriter() {
         return { text: line, visible, done: visible >= line.length };
     });
     const activeLine = lines.findIndex((l) => !l.done);
-    return { lines, activeLine, done: typed >= TOTAL_CHARS };
+    const done = typed >= TOTAL_CHARS;
+
+    return (
+        <pre className="overflow-x-auto p-4 font-mono text-[11px] leading-6 sm:p-5 sm:text-[13px] sm:leading-7 md:text-sm">
+            <code>
+                {lines.map((line, i) => (
+                    <CodeLine
+                        key={i}
+                        index={i}
+                        text={line.text}
+                        visible={line.visible}
+                        done={line.done}
+                        caret={i === activeLine || (done && i === lines.length - 1)}
+                    />
+                ))}
+            </code>
+        </pre>
+    );
 }
 
 /**
@@ -147,17 +226,8 @@ function useTypewriter() {
  * Each layer sits at a different translateZ depth inside the cursor tilt.
  */
 function HeroShowcase() {
-    const { lines, activeLine, done } = useTypewriter();
-
-    // syntax-colored renderings shown once a line finishes typing
-    const colored = [
-        <><span className="text-fuchsia-500 dark:text-fuchsia-400">const</span> <span className="text-cyan-600 dark:text-cyan-300">sharath</span> = {"{"}</>,
-        <>  role: <Str>&quot;Full-Stack Developer&quot;</Str>,</>,
-        <>  experience: <Str>&quot;3+ years&quot;</Str>,</>,
-        <>  stack: [<Str>&quot;React&quot;</Str>, <Str>&quot;Next.js&quot;</Str>, <Str>&quot;Node&quot;</Str>],</>,
-        <>  ships: () <span className="text-fuchsia-500 dark:text-fuchsia-400">=&gt;</span> <Str>&quot;end-to-end products&quot;</Str>,</>,
-        <>{"}"};</>,
-    ];
+    const [done, setDone] = useState(false);
+    const handleDone = useCallback(() => setDone(true), []);
 
     return (
         <MouseTilt className="mx-auto w-full max-w-md" maxTilt={7}>
@@ -177,19 +247,7 @@ function HeroShowcase() {
                         <span className="h-3 w-3 rounded-full bg-[#28c840]" />
                         <span className="ml-3 font-mono text-xs text-muted">sharath.ts</span>
                     </div>
-                    <pre className="overflow-x-auto p-4 font-mono text-[11px] leading-6 sm:p-5 sm:text-[13px] sm:leading-7 md:text-sm">
-                        <code>
-                            {lines.map((line, i) => (
-                                <span key={i} className="block whitespace-pre">
-                                    <span className="mr-4 inline-block w-4 select-none text-right text-muted opacity-50">
-                                        {i + 1}
-                                    </span>
-                                    {line.done ? colored[i] : line.text.slice(0, line.visible)}
-                                    {(i === activeLine || (done && i === lines.length - 1)) && <Caret />}
-                                </span>
-                            ))}
-                        </code>
-                    </pre>
+                    <CodeEditor onDone={handleDone} />
                 </div>
 
                 {/* floating terminal — enters only after the code finishes typing.
@@ -239,12 +297,13 @@ function HeroShowcase() {
 }
 
 function Caret() {
+    // CSS keyframes rather than a framer-motion `repeat: Infinity` loop —
+    // a blinking cursor should not cost a main-thread tick for the life of
+    // the page.
     return (
-        <motion.span
+        <span
             aria-hidden
-            animate={{ opacity: [1, 0, 1] }}
-            transition={{ duration: 1.1, repeat: Infinity, ease: "linear" }}
-            className="ml-0.5 inline-block h-4 w-[7px] translate-y-[3px] bg-indigo-400"
+            className="ml-0.5 inline-block h-4 w-[7px] translate-y-[3px] bg-indigo-400 animate-caret-blink"
         />
     );
 }

@@ -6,6 +6,13 @@ import { useTheme } from "next-themes";
 export default function StatusBar() {
     const { resolvedTheme } = useTheme();
     const [time, setTime] = useState("");
+    // The server has no way to know the resolved theme, so rendering it
+    // directly produced a text mismatch on hydration — and a mismatch at this
+    // depth makes React discard the whole server tree and re-render from
+    // scratch, which showed up as a full-page layout shift.
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => setMounted(true), []);
 
     useEffect(() => {
         const tick = () =>
@@ -36,7 +43,7 @@ export default function StatusBar() {
                     {time && `local ${time} IST`}
                 </span>
                 <span>
-                    {resolvedTheme ?? "system"} · Next.js × Tailwind × Motion
+                    {(mounted && resolvedTheme) || "system"} · Next.js × Tailwind × Motion
                 </span>
             </div>
         </div>

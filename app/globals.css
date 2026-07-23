@@ -162,3 +162,205 @@ body {
   initial-value: 0deg;
   inherits: false;
 }
+
+/* ---------- First-paint entrance animations ----------
+   These mirror the framer-motion entrance language exactly, but run as CSS
+   keyframes so above-the-fold content animates from the first paint instead
+   of waiting on hydration. That matters for LCP: an element sitting at
+   opacity:0 until JS boots is not an LCP candidate, which was pushing the
+   hero paragraph out to ~4.8s. `both` fill keeps the from-state applied
+   during the delay, so the choreography is identical. */
+
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes enter-rise-blur {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes enter-wipe {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+@keyframes enter-pop {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* word-by-word reveal, matching RevealText's spring-out feel */
+@keyframes reveal-word {
+  from {
+    opacity: 0;
+    transform: translateY(115%) rotate(4deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer utilities {
+  .enter-rise,
+  .enter-rise-blur,
+  .enter-wipe,
+  .enter-pop,
+  .enter-fade {
+    animation-duration: 0.6s;
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-delay: var(--enter-delay, 0s);
+  }
+
+  .enter-rise {
+    animation-name: enter-rise;
+  }
+  .enter-rise-blur {
+    animation-name: enter-rise-blur;
+    animation-duration: 0.7s;
+  }
+  .enter-wipe {
+    animation-name: enter-wipe;
+    animation-duration: 0.9s;
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .enter-pop {
+    animation-name: enter-pop;
+    animation-duration: 0.8s;
+  }
+  .enter-fade {
+    animation-name: enter-fade;
+  }
+}
+
+@keyframes enter-page {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* app/template.tsx — replays on every navigation because the element remounts */
+.enter-page {
+  animation: enter-page 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* AnimatedSection: holds its pre-entrance state until scrolled into view */
+[data-section-enter="pending"] {
+  opacity: 0;
+  transform: translateY(48px);
+  filter: blur(10px);
+}
+
+/* Sections still far below the fold are skipped entirely by the renderer.
+   Released 600px ahead of the viewport (see AnimatedSection) so the browser's
+   height guess is corrected off screen and nothing visible shifts. */
+[data-section-render="deferred"] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 700px;
+}
+
+[data-section-enter="run"] {
+  animation: section-enter 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--enter-delay, 0s);
+}
+
+/* RevealText: words hold their hidden state until the block is marked
+   "run" (immediately for above-the-fold copy, on intersection otherwise). */
+[data-reveal] .reveal-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(115%) rotate(4deg);
+}
+
+[data-reveal="run"] .reveal-word {
+  animation: reveal-word 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--enter-delay, 0s);
+}
+
+/* No `will-change` here on purpose. A running animation is promoted by the
+   compositor anyway, and dropping the hint afterwards forced a repaint that
+   Chrome recorded as a fresh — and much later — LCP candidate for the hero
+   heading, costing seconds on the metric for no visual benefit. */
+
+/* MotionConfig reducedMotion="user" covers the framer-motion side; this is
+   the CSS-keyframe equivalent of the same promise. */
+@media (prefers-reduced-motion: reduce) {
+  .enter-rise,
+  .enter-rise-blur,
+  .enter-wipe,
+  .enter-pop,
+  .enter-fade {
+    animation: none !important;
+  }
+
+  .enter-page,
+  [data-reveal] .reveal-word,
+  [data-section-enter] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    animation: none !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}

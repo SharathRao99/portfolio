@@ -1,6 +1,6 @@
 "use client";
-import { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 /**
@@ -60,9 +60,10 @@ function Constellation({ isDark }: { isDark: boolean }) {
         const t = clock.getElapsedTime();
         g.rotation.y = t * 0.012;
         g.position.y = Math.sin(t * 0.1) * 0.4;
-        // eased cursor parallax, kept gentle
-        g.rotation.x += (pointer.y * 0.05 - g.rotation.x) * 0.02;
-        g.rotation.z += (pointer.x * 0.03 - g.rotation.z) * 0.02;
+        // eased cursor parallax, kept gentle. The lerp factor is scaled by the
+        // frame budget so the easing feels the same at the throttled rate.
+        g.rotation.x += (pointer.y * 0.05 - g.rotation.x) * 0.04;
+        g.rotation.z += (pointer.x * 0.03 - g.rotation.z) * 0.04;
     });
 
     return (
@@ -157,14 +158,65 @@ function CodeGlyphs({ isDark }: { isDark: boolean }) {
     );
 }
 
+/* ---------- frame budget ---------- */
+
+const TARGET_FPS = 30;
+
+/**
+ * The scene drifts on 26–60 second cycles, so rendering it at the display's
+ * full refresh rate buys nothing perceptible while costing a WebGL draw over
+ * the whole viewport every frame — and forcing every `backdrop-filter` panel
+ * above it to recompute its blur just as often. `frameloop="demand"` hands
+ * that schedule to us; we invalidate at 30fps and stop entirely when the tab
+ * is hidden.
+ */
+function FrameBudget() {
+    const invalidate = useThree((state) => state.invalidate);
+
+    useEffect(() => {
+        const interval = 1000 / TARGET_FPS;
+        let rafId = 0;
+        let last = 0;
+
+        const tick = (time: number) => {
+            rafId = requestAnimationFrame(tick);
+            if (time - last < interval) return;
+            last = time;
+            invalidate();
+        };
+
+        const start = () => {
+            if (!rafId) rafId = requestAnimationFrame(tick);
+        };
+        const stop = () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = 0;
+        };
+        const onVisibility = () => (document.hidden ? stop() : start());
+
+        start();
+        document.addEventListener("visibilitychange", onVisibility);
+        return () => {
+            stop();
+            document.removeEventListener("visibilitychange", onVisibility);
+        };
+    }, [invalidate]);
+
+    return null;
+}
+
 export default function ParticleField({ isDark }: { isDark: boolean }) {
     return (
         <Canvas
             camera={{ position: [0, 0, 9], fov: 55 }}
-            dpr={[1, 1.5]}
+            // a soft, low-opacity particle haze gains nothing from a retina
+            // backing store, and dropping to 1 more than halves fragment work
+            dpr={1}
+            frameloop="demand"
             gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
             style={{ position: "absolute", inset: 0 }}
         >
+            <FrameBudget />
             <Constellation isDark={isDark} />
             <CodeGlyphs isDark={isDark} />
         </Canvas>
