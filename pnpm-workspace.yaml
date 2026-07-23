@@ -1,3 +1,5 @@
-allowBuilds:
-  '@vercel/speed-insights': true
-  sharp: true
+# Allow trusted native deps (sharp, @vercel/speed-insights) to run their
+# build scripts. Without this, pnpm 10+/11 aborts install with
+# ERR_PNPM_IGNORED_BUILDS (exit 1) in CI such as Vercel. The old `allowBuilds`
+# key here was not a real pnpm setting and did nothing.
+dangerouslyAllowAllBuilds: true
