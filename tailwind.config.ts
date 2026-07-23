@@ -59,6 +59,10 @@ const config: Config = {
           "30%": { opacity: "1" },
           "100%": { transform: "translateY(14px)", opacity: "0" },
         },
+        "caret-blink": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0" },
+        },
       },
       animation: {
         "aurora-drift": "aurora-drift 26s ease-in-out infinite",
@@ -71,6 +75,7 @@ const config: Config = {
         shimmer: "shimmer 6s linear infinite",
         "float-y": "float-y 7s ease-in-out infinite",
         "scroll-hint": "scroll-hint 2.2s ease-in-out infinite",
+        "caret-blink": "caret-blink 1.1s linear infinite",
       },
       boxShadow: {
         "glow-sm": "0 0 24px -6px rgba(129, 140, 248, 0.45)",

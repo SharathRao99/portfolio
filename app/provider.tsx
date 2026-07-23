@@ -2,22 +2,21 @@
 
 import { ThemeProvider } from 'next-themes'
 import { MotionConfig } from 'framer-motion'
-import { useState, useEffect } from 'react'
 
+/**
+ * The provider tree is rendered once. It used to gate ThemeProvider behind a
+ * `mounted` flag, which meant the entire app was rendered without it, then
+ * re-rendered underneath it the moment hydration finished — a full second
+ * pass over every component on the page. `suppressHydrationWarning` on <html>
+ * (see app/layout.tsx) is the supported way to let next-themes set the class
+ * before React hydrates; components that need the resolved value already
+ * guard for it (e.g. ThemeSwitch).
+ */
 export function Providers({ children }: { children: React.ReactNode }) {
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
-
-    // reducedMotion="user": every framer animation honors the OS setting
-    const content = <MotionConfig reducedMotion="user">{children}</MotionConfig>
-
-    if (!mounted) return content
     return (
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {content}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            {/* reducedMotion="user": every framer animation honors the OS setting */}
+            <MotionConfig reducedMotion="user">{children}</MotionConfig>
         </ThemeProvider>
     )
 }

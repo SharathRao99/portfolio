@@ -16,15 +16,26 @@ import { personalInfo } from "../lib/data";
 
 const SITE_URL = "https://sharath-portfolio.vercel.app";
 
+// woff2 subsets of the same variable fonts (wght 100–900 intact), trimmed to
+// the latin + punctuation/arrow ranges this site actually renders. 132KB of
+// .woff became 60KB, and fonts were ~40% of all bytes on the page.
 const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
+  src: "./fonts/GeistVF.woff2",
   variable: "--font-geist-sans",
   weight: "100 900",
+  display: "swap",
+  preload: true,
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
+  src: "./fonts/GeistMonoVF.woff2",
   variable: "--font-geist-mono",
   weight: "100 900",
+  display: "swap",
+  // used above the fold by .eyebrow and the hero code panel, so it has to be
+  // preloaded — swapping it in late reflows the hero and shifts the page
+  preload: true,
+  fallback: ["ui-monospace", "monospace"],
 });
 
 export const metadata: Metadata = {
@@ -62,11 +73,10 @@ export const metadata: Metadata = {
     title: "Sharath B C | Full Stack Developer",
     description: "Full-Stack Developer skilled in building scalable web and mobile applications.",
   },
-  icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
-  },
+  // No `icons` block: app/icon.png and app/apple-icon.png are picked up by
+  // Next's file convention and emitted once each, with content hashes. Listing
+  // the same PNG under icon/shortcut/apple made the browser fetch it three
+  // times at high priority — 147KB competing with the hero for bandwidth.
   robots: {
     index: true,
     follow: true,
@@ -120,7 +130,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // next-themes sets the theme class on <html> before hydration
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiase`}
       >
