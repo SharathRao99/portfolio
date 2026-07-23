@@ -23,6 +23,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui"],
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+        comic: ["var(--font-comic)", "var(--font-geist-sans)", "system-ui", "sans-serif"],
       },
       keyframes: {
         "aurora-drift": {

@@ -1,0 +1,137 @@
+/* =========================================================================
+   Avengers mode — full comic-book re-skin.
+   Every rule is scoped under [data-anim="avengers"] (set on <html> by
+   AnimationModeProvider), so this stylesheet is completely inert in the
+   default theme: no colours change, and because the comic font family is
+   only referenced here, its woff2 is never even downloaded in default mode.
+   ========================================================================= */
+
+/* ---- comic colour palette (re-tints the whole site via the shared vars) ---- */
+:root[data-anim="avengers"] {
+  --background: #f6ead0;
+  --foreground: #12101b;
+  --muted: #4a2f2f;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-border: rgba(17, 12, 21, 0.9);
+  --glow-1: rgba(220, 38, 38, 0.3);
+  --glow-2: rgba(29, 78, 216, 0.3);
+  --glow-3: rgba(245, 158, 11, 0.28);
+  --spotlight: rgba(220, 38, 38, 0.1);
+}
+
+:root.dark[data-anim="avengers"] {
+  --background: #0a0812;
+  --foreground: #fdf6e3;
+  --muted: #c9b48f;
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-border: rgba(253, 224, 71, 0.55);
+  --glow-1: rgba(220, 38, 38, 0.22);
+  --glow-2: rgba(37, 99, 235, 0.24);
+  --glow-3: rgba(245, 158, 11, 0.2);
+  --spotlight: rgba(245, 158, 11, 0.12);
+}
+
+/* ---- halftone (ben-day dot) texture over the whole page ---- */
+:root[data-anim="avengers"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image: radial-gradient(currentColor 1.1px, transparent 1.2px);
+  background-size: 9px 9px;
+  color: #b91c1c;
+  mix-blend-mode: multiply;
+}
+:root.dark[data-anim="avengers"] body::before {
+  color: #fde047;
+  mix-blend-mode: screen;
+  opacity: 0.08;
+}
+
+/* ---- comic display font on the loud typography ---- */
+[data-anim="avengers"] h1,
+[data-anim="avengers"] h2,
+[data-anim="avengers"] h3,
+[data-anim="avengers"] .text-gradient,
+[data-anim="avengers"] .eyebrow {
+  font-family: var(--font-comic), var(--font-geist-sans), system-ui, sans-serif !important;
+  letter-spacing: 0.02em;
+}
+
+/* recolour the gradient text to a Marvel-ish sweep */
+[data-anim="avengers"] .text-gradient {
+  @apply from-red-600 via-amber-500 to-blue-600 dark:from-red-400 dark:via-amber-300 dark:to-blue-400;
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.35);
+}
+
+[data-anim="avengers"] .eyebrow::before {
+  content: "★ ";
+  color: #f59e0b;
+}
+
+/* ---- comic "panel" surfaces: thick black outline + hard offset shadow ---- */
+[data-anim="avengers"] .glass,
+[data-anim="avengers"] .glass-light,
+[data-anim="avengers"] .glass-strong {
+  border-width: 3px !important;
+  border-color: var(--surface-border) !important;
+  box-shadow: 5px 5px 0 0 rgba(0, 0, 0, 0.85);
+}
+:root.dark[data-anim="avengers"] .glass,
+:root.dark[data-anim="avengers"] .glass-light,
+:root.dark[data-anim="avengers"] .glass-strong {
+  box-shadow: 5px 5px 0 0 rgba(253, 224, 71, 0.5);
+}
+
+/* louder text selection */
+:root[data-anim="avengers"] ::selection {
+  background: #f59e0b;
+  color: #12101b;
+}
+
+/* one-shot "POW" flourish overlay played when toggling into Avengers mode */
+@keyframes avengers-pow {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) rotate(-12deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05) rotate(-6deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(-6deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.15) rotate(-6deg);
+  }
+}
+
+.avengers-pow {
+  position: fixed;
+  left: 50%;
+  top: 42%;
+  z-index: 95;
+  pointer-events: none;
+  padding: 0.4em 0.9em;
+  font-family: var(--font-comic), system-ui, sans-serif;
+  font-size: clamp(3rem, 14vw, 9rem);
+  color: #fde047;
+  background: #dc2626;
+  border: 6px solid #12101b;
+  border-radius: 18px;
+  box-shadow: 10px 10px 0 0 #12101b;
+  -webkit-text-stroke: 2px #12101b;
+  animation: avengers-pow 0.9s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avengers-pow {
+    animation: none;
+    display: none;
+  }
+}

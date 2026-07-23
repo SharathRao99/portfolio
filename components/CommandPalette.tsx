@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { AnimatePresence, motion } from "framer-motion";
 import { personalInfo } from "@/lib/data";
+import { useAnimationMode } from "./animation-mode/AnimationModeProvider";
 
 // module-level opener so the header chip can trigger the palette
 // (same pattern as scrollToTop in motion/SmoothScroll)
@@ -24,6 +25,7 @@ type Command = {
 export default function CommandPalette() {
     const router = useRouter();
     const { setTheme, resolvedTheme } = useTheme();
+    const { mode: animMode, toggle: toggleAnimMode } = useAnimationMode();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [selected, setSelected] = useState(0);
@@ -49,6 +51,17 @@ export default function CommandPalette() {
                 label: `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`,
                 keywords: "theme dark light mode toggle appearance",
                 run: () => setTheme(resolvedTheme === "dark" ? "light" : "dark"),
+            },
+            {
+                id: "anim-mode",
+                group: "Actions",
+                label:
+                    animMode === "avengers"
+                        ? "Switch to default animation"
+                        : "Switch to Avengers animation",
+                hint: animMode === "avengers" ? "default" : "⚡",
+                keywords: "animation mode avengers marvel heroes background theme motion",
+                run: () => toggleAnimMode(),
             },
             {
                 id: "email",
@@ -83,7 +96,7 @@ export default function CommandPalette() {
                 },
             },
         ],
-        [router, setTheme, resolvedTheme, copied, close]
+        [router, setTheme, resolvedTheme, animMode, toggleAnimMode, copied, close]
     );
 
     const filtered = useMemo(() => {

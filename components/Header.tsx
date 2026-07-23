@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { AnimatePresence, motion, useScroll, useMotionValueEvent } from 'framer-motion'
 import ThemeSwitch from './ThemeSwitch'
+import AnimationModeSwitch from './AnimationModeSwitch'
 import { openPalette } from './CommandPalette'
 import { navData, personalInfo } from '@/lib/data'
 
@@ -91,6 +92,7 @@ export default function Header() {
             >
               <span>⌘</span>K
             </button>
+            <AnimationModeSwitch />
             <ThemeSwitch />
             <Link
               href={personalInfo.contactLink}
@@ -117,6 +119,7 @@ export default function Header() {
             >
               &gt;_
             </button>
+            <AnimationModeSwitch />
             <ThemeSwitch />
             <button
               aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Bangers } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
@@ -12,6 +13,7 @@ import SmoothScroll from "../components/motion/SmoothScroll";
 import BackToTop from "../components/motion/BackToTop";
 import CommandPalette from "../components/CommandPalette";
 import WebMCPTools from "../components/WebMCPTools";
+import { animModeScript } from "../components/animation-mode/AnimationModeProvider";
 import { personalInfo } from "../lib/data";
 
 const SITE_URL = "https://sharath-portfolio.vercel.app";
@@ -36,6 +38,17 @@ const geistMono = localFont({
   // preloaded — swapping it in late reflows the hero and shifts the page
   preload: true,
   fallback: ["ui-monospace", "monospace"],
+});
+// Comic display font for Avengers mode only. next/font self-hosts it at build
+// (no runtime CDN). preload:false + the fact that the family is referenced ONLY
+// under [data-anim="avengers"] means the browser never downloads it in the
+// default theme — the woff2 loads lazily the first time a comic heading renders.
+const bangers = Bangers({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-comic",
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -133,8 +146,11 @@ export default function RootLayout({
     // next-themes sets the theme class on <html> before hydration
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiase`}
+        className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} antialiased`}
       >
+        {/* restores the saved animation mode onto <html data-anim> before
+            hydration so the correct background mounts on first paint */}
+        <script dangerouslySetInnerHTML={{ __html: animModeScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
