@@ -17,6 +17,24 @@
   --glow-2: rgba(29, 78, 216, 0.3);
   --glow-3: rgba(245, 158, 11, 0.28);
   --spotlight: rgba(220, 38, 38, 0.1);
+
+  /* remap the brand accent scales to the comic palette. Because every accent
+     utility across the site reads these vars, all skills/about/projects pages
+     recolour automatically (cyan → red, indigo → blue, fuchsia → gold). */
+  --acc-cyan-300: 252 165 165;
+  --acc-cyan-400: 248 113 113;
+  --acc-cyan-500: 239 68 68;
+  --acc-cyan-600: 220 38 38;
+  --acc-indigo-300: 147 197 253;
+  --acc-indigo-400: 96 165 250;
+  --acc-indigo-500: 59 130 246;
+  --acc-fuchsia-300: 253 224 71;
+  --acc-fuchsia-400: 251 191 36;
+  --acc-fuchsia-500: 245 158 11;
+  --acc-sky-400: 96 165 250;
+  --acc-sky-500: 59 130 246;
+  --acc-blue-400: 96 165 250;
+  --acc-blue-600: 37 99 235;
 }
 
 :root.dark[data-anim="avengers"] {
@@ -83,6 +101,22 @@
 :root.dark[data-anim="avengers"] .glass-light,
 :root.dark[data-anim="avengers"] .glass-strong {
   box-shadow: 5px 5px 0 0 rgba(253, 224, 71, 0.5);
+}
+
+/* ---- filled primary CTAs (Resume, project links, magnetic buttons) ----
+   These use the literal `bg-gradient-to-r from-cyan-500 … text-white` utility
+   combo; recolour them to a comic sweep + panel border. The selector is scoped
+   to that exact combo so it never touches `.text-gradient` (a custom class, no
+   literal from-cyan-500 in the DOM) or the `/40` decorative gradients. */
+[data-anim="avengers"] .bg-gradient-to-r.from-cyan-500.text-white {
+  background-image: linear-gradient(110deg, #dc2626, #f59e0b 50%, #2563eb) !important;
+  border: 3px solid #12101b;
+  box-shadow: 4px 4px 0 0 #12101b;
+  color: #fff !important;
+}
+:root.dark[data-anim="avengers"] .bg-gradient-to-r.from-cyan-500.text-white {
+  border-color: #12101b;
+  box-shadow: 4px 4px 0 0 rgba(253, 224, 71, 0.6);
 }
 
 /* louder text selection */
