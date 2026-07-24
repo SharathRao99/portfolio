@@ -71,6 +71,16 @@ export default function AvengersBackground() {
     const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
     // the most recent entrance's FX, shown as a brief page-wide storm/glow burst
     const [burst, setBurst] = useState<{ fx: Fx; key: number } | null>(null);
+    // On phones the sprites overlap the (edge-to-edge) text column, so shrink
+    // them, fade them, and tuck them against the screen edge.
+    const [compact, setCompact] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 640px)");
+        const onChange = () => setCompact(mq.matches);
+        onChange();
+        mq.addEventListener("change", onChange);
+        return () => mq.removeEventListener("change", onChange);
+    }, []);
 
     // Build assignments after mount (client-only → random, no hydration mismatch).
     useEffect(() => {
@@ -134,6 +144,7 @@ export default function AvengersBackground() {
                     slot={a.slot}
                     active={activeIds.has(a.hero.id)}
                     reduce={!!reduce}
+                    compact={compact}
                 />
             ))}
         </div>
@@ -147,14 +158,17 @@ function HeroSprite({
     slot,
     active,
     reduce,
+    compact,
 }: {
     hero: Hero;
     slot: Slot;
     active: boolean;
     reduce: boolean;
+    compact: boolean;
 }) {
     const [open, setOpen] = useState(false);
     const Pose = hero.Pose;
+    const size = Math.round(slot.size * (compact ? 0.52 : 1));
 
     // pseudo-3D tilt on hover
     const rx = useSpring(useMotionValue(0), { stiffness: 220, damping: 18 });
@@ -180,9 +194,10 @@ function HeroSprite({
             className="absolute"
             style={{
                 top: `${slot.top}vh`,
-                [slot.side]: "3%",
-                width: slot.size,
-                height: slot.size,
+                // tuck against the screen edge on phones so sprites clear the text
+                [slot.side]: compact ? "-4%" : "3%",
+                width: size,
+                height: size,
                 perspective: 800,
             }}
         >
@@ -223,7 +238,7 @@ function HeroSprite({
                         onClick={() => setOpen((v) => !v)}
                     >
                         <motion.div
-                            style={{ rotateX: rx, rotateY: ry }}
+                            style={{ rotateX: rx, rotateY: ry, opacity: compact ? 0.4 : 1 }}
                             className="h-full w-full"
                             aria-hidden
                         >
