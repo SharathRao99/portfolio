@@ -7,7 +7,7 @@ import { useTheme } from "next-themes";
 import { useAnimationMode } from "./animation-mode/AnimationModeProvider";
 
 // WebGL layer is heavy — load it lazily, client-only
-const ShaderField = dynamic(() => import("./three/ShaderField"), { ssr: false });
+const ParticleField = dynamic(() => import("./three/ParticleField"), { ssr: false });
 
 // Avengers layer is only ever fetched for visitors who opt into that mode, so
 // default-mode traffic never pays for it (protects the Lighthouse baseline).
@@ -119,7 +119,7 @@ export default function BackgroundAnimation() {
 
             {/* WebGL depth layer — default mode only; Avengers mode swaps in its
                 own (lighter, SVG) hero layer instead of the three.js field */}
-            {showWebGL && !isAvengers && <ShaderField isDark={resolvedTheme !== "light"} />}
+            {showWebGL && !isAvengers && <ParticleField isDark={resolvedTheme !== "light"} />}
 
             {/* structural grid, radially masked so it stays quiet */}
             <div
