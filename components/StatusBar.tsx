@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { useAnimationMode } from "./animation-mode/AnimationModeProvider";
 
 /** IDE-style status bar: the last strip of the page. */
 export default function StatusBar() {
     const { resolvedTheme } = useTheme();
+    const { mode } = useAnimationMode();
     const [time, setTime] = useState("");
     // The server has no way to know the resolved theme, so rendering it
     // directly produced a text mismatch on hydration — and a mismatch at this
@@ -43,7 +45,8 @@ export default function StatusBar() {
                     {time && `local ${time} IST`}
                 </span>
                 <span>
-                    {(mounted && resolvedTheme) || "system"} · Next.js × Tailwind × Motion
+                    {(mounted && resolvedTheme) || "system"} · {(mounted && mode) || "default"} mode
+                    {" "}· Next.js × Tailwind × Motion
                 </span>
             </div>
         </div>

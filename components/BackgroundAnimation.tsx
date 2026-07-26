@@ -7,7 +7,7 @@ import { useTheme } from "next-themes";
 import { useAnimationMode } from "./animation-mode/AnimationModeProvider";
 
 // WebGL layer is heavy — load it lazily, client-only
-const ParticleField = dynamic(() => import("./three/ParticleField"), { ssr: false });
+const ShaderField = dynamic(() => import("./three/ShaderField"), { ssr: false });
 
 // Avengers layer is only ever fetched for visitors who opt into that mode, so
 // default-mode traffic never pays for it (protects the Lighthouse baseline).
@@ -101,6 +101,7 @@ export default function BackgroundAnimation() {
     const spotY = useTransform(springY, (v) => v - SPOTLIGHT_SIZE / 2);
 
     return (
+        <>
         <div aria-hidden className="noise fixed inset-0 -z-50 overflow-hidden">
             {/* aurora blobs */}
             <div
@@ -118,8 +119,7 @@ export default function BackgroundAnimation() {
 
             {/* WebGL depth layer — default mode only; Avengers mode swaps in its
                 own (lighter, SVG) hero layer instead of the three.js field */}
-            {showWebGL && !isAvengers && <ParticleField isDark={resolvedTheme !== "light"} />}
-            {isAvengers && <AvengersBackground />}
+            {showWebGL && !isAvengers && <ShaderField isDark={resolvedTheme !== "light"} />}
 
             {/* structural grid, radially masked so it stays quiet */}
             <div
@@ -146,5 +146,11 @@ export default function BackgroundAnimation() {
                 }}
             />
         </div>
+
+        {/* Avengers hero layer — rendered OUTSIDE the -z-50 background so its
+            own z-30 actually sits above page content (icons become hoverable /
+            clickable); the -z-50 wrapper would otherwise trap it behind #content. */}
+        {isAvengers && <AvengersBackground />}
+        </>
     );
 }

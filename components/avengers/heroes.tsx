@@ -24,7 +24,7 @@ export type Entrance =
     | "illusion"; // Loki / Doom — ghost copies collapse into one
 
 /** short-lived background effect fired during the entrance */
-export type Fx = "lightning" | "web" | "portal" | "thruster" | "shock" | "illusion" | "none";
+export type Fx = "lightning" | "web" | "portal" | "thruster" | "shock" | "illusion" | "shield" | "none";
 
 export type Hero = {
     id: string;
@@ -103,9 +103,9 @@ function Spider({ className, style }: EmblemProps) {
         <svg {...svgBase} className={className} style={style}>
             <path d="M50 16 c18 0 30 14 30 30 c0 20 -18 38 -30 38 s-30 -18 -30 -38 c0 -16 12 -30 30 -30 z"
                 fill="#dc2626" stroke="#7f1d1d" strokeWidth="3" />
-            <path d="M50 20 v56 M24 46 h52 M30 30 l40 32 M70 30 l-40 32" stroke="#7f1d1d" strokeWidth="1.6" />
-            <path d="M34 44 c4 -8 14 -8 16 0 c-4 6 -12 6 -16 0 z" fill="#f8fafc" stroke="#1e293b" strokeWidth="1.5" />
-            <path d="M66 44 c-4 -8 -14 -8 -16 0 c4 6 12 6 16 0 z" fill="#f8fafc" stroke="#1e293b" strokeWidth="1.5" />
+            <path d="M50 20 v56 M24 46 h52 M30 30 l40 32 M70 30 l-40 32" stroke="#5b1414" strokeWidth="2.4" />
+            <path d="M34 44 c4 -8 14 -8 16 0 c-4 6 -12 6 -16 0 z" fill="#f8fafc" stroke="#1e293b" strokeWidth="2" />
+            <path d="M66 44 c-4 -8 -14 -8 -16 0 c4 6 12 6 16 0 z" fill="#f8fafc" stroke="#1e293b" strokeWidth="2" />
         </svg>
     );
 }
@@ -171,7 +171,7 @@ export const HEROES: Hero[] = [
     { id: "thor", name: "Storm Bringer", kind: "hero", accent: "#fde047", dialog: "I say thee nay!", entrance: "hammer", fx: "lightning", Pose: Thor },
     { id: "hulk", name: "Green Titan", kind: "hero", accent: "#22c55e", dialog: "SMASH!", entrance: "smash", fx: "shock", Pose: Hulk },
     { id: "strange", name: "Mystic Ring", kind: "hero", accent: "#fbbf24", dialog: "By the Vishanti!", entrance: "portal", fx: "portal", Pose: Strange },
-    { id: "captain", name: "Star Shield", kind: "hero", accent: "#1d4ed8", dialog: "I can do this all day.", entrance: "shield", fx: "none", Pose: Captain },
+    { id: "captain", name: "Star Shield", kind: "hero", accent: "#1d4ed8", dialog: "I can do this all day.", entrance: "shield", fx: "shield", Pose: Captain },
     { id: "thanos", name: "Mad Titan", kind: "villain", accent: "#a855f7", dialog: "I am inevitable.", entrance: "gauntlet", fx: "shock", Pose: Thanos },
     { id: "loki", name: "Trickster", kind: "villain", accent: "#15803d", dialog: "Glorious purpose.", entrance: "illusion", fx: "illusion", Pose: Loki },
     { id: "doom", name: "Iron Mask", kind: "villain", accent: "#9ca3af", dialog: "Doom demands it.", entrance: "illusion", fx: "illusion", Pose: Doom },

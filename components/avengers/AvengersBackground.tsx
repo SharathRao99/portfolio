@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
-    AnimatePresence,
     motion,
+    useAnimationControls,
     useMotionValue,
     useReducedMotion,
     useSpring,
@@ -12,6 +13,7 @@ import {
 } from "framer-motion";
 import { HEROES, type Fx, type Hero } from "./heroes";
 import HeroDialog from "./HeroDialog";
+import AvengersFx, { type Burst } from "./AvengersFx";
 
 /**
  * Avengers-mode stage. A single fixed layer that:
@@ -30,16 +32,18 @@ import HeroDialog from "./HeroDialog";
 
 type Slot = { side: "left" | "right"; top: number; size: number };
 
+// Alternating left/right, with each column's slots kept ~19vh apart and sizes
+// modest so no two settled heroes overlap even when many are on screen at once.
 const SLOTS: Slot[] = [
-    { side: "left", top: 16, size: 168 },
-    { side: "right", top: 30, size: 196 },
-    { side: "left", top: 52, size: 150 },
-    { side: "right", top: 60, size: 182 },
-    { side: "left", top: 24, size: 176 },
-    { side: "right", top: 44, size: 160 },
-    { side: "left", top: 64, size: 190 },
-    { side: "right", top: 20, size: 150 },
-    { side: "left", top: 40, size: 170 },
+    { side: "left", top: 8, size: 148 },
+    { side: "right", top: 17, size: 156 },
+    { side: "left", top: 27, size: 140 },
+    { side: "right", top: 38, size: 150 },
+    { side: "left", top: 46, size: 146 },
+    { side: "right", top: 59, size: 152 },
+    { side: "left", top: 65, size: 138 },
+    { side: "right", top: 80, size: 148 },
+    { side: "left", top: 84, size: 136 },
 ];
 
 function shuffle<T>(input: T[]): T[] {
@@ -49,6 +53,19 @@ function shuffle<T>(input: T[]): T[] {
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
+}
+
+// Exact viewport position (uv, y-up) of a settled hero's icon centre, computed
+// from the same slot geometry the sprite is positioned with — so an
+// entrance-triggered burst radiates from the icon itself (e.g. Thor's hammer).
+function iconCenter(slot: Slot, compact: boolean): { x: number; y: number } {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const size = Math.round(slot.size * (compact ? 0.52 : 1));
+    const edge = (compact ? -0.04 : 0.03) * vw; // matches the sprite's [side]: 3% / -4%
+    const cx = slot.side === "left" ? edge + size / 2 : vw - edge - size / 2;
+    const cy = (slot.top / 100) * vh + size / 2;
+    return { x: cx / vw, y: 1 - cy / vh };
 }
 
 function collectSections(): HTMLElement[] {
@@ -68,9 +85,14 @@ type Assignment = { hero: Hero; slot: Slot; section: HTMLElement };
 export default function AvengersBackground() {
     const reduce = useReducedMotion();
     const [assignments, setAssignments] = useState<Assignment[]>([]);
-    const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
-    // the most recent entrance's FX, shown as a brief page-wide storm/glow burst
-    const [burst, setBurst] = useState<{ fx: Fx; key: number } | null>(null);
+    // indices of the sections currently on screen → only those heroes show, so a
+    // section's icon is gone by the time you reach the next one.
+    const [visible, setVisible] = useState<Set<number>>(new Set());
+    const visibleRef = useRef<Set<number>>(new Set());
+    // sections whose entrance FX has already fired (fire once, not on every re-scroll)
+    const seenRef = useRef<Set<number>>(new Set());
+    // the most recent FX, played as a brief WebGL burst from the hero's position
+    const [burst, setBurst] = useState<Burst | null>(null);
     // On phones the sprites overlap the (edge-to-edge) text column, so shrink
     // them, fade them, and tuck them against the screen edge.
     const [compact, setCompact] = useState(false);
@@ -82,71 +104,121 @@ export default function AvengersBackground() {
         return () => mq.removeEventListener("change", onChange);
     }, []);
 
-    // Build assignments after mount (client-only → random, no hydration mismatch).
+    // (Re)build assignments on mount AND on every client-side navigation. The
+    // layer lives in the root layout, so it persists across routes — without the
+    // pathname dependency the observers stay bound to the previous page's now
+    // detached <section> nodes and no hero appears after the first navigation.
+    // A rAF lets the new page's DOM commit before we collect its sections.
+    const pathname = usePathname();
     useEffect(() => {
-        const sections = collectSections();
-        if (!sections.length) return;
-        const roster = shuffle(HEROES);
-        setAssignments(
-            sections.map((section, i) => ({
-                hero: roster[i % roster.length],
-                slot: SLOTS[i % SLOTS.length],
-                section,
-            }))
-        );
-    }, []);
+        // Drop the previous route's heroes at once so they don't slowly animate
+        // out on top of the incoming page's reveal (which read as a "collision").
+        setAssignments([]);
+        setVisible(new Set());
+        visibleRef.current = new Set();
+        seenRef.current = new Set();
+        setBurst(null);
+        const build = () => {
+            const sections = collectSections();
+            // reset the per-page tracking so this route's heroes reveal + fire fresh
+            seenRef.current = new Set();
+            visibleRef.current = new Set();
+            setVisible(new Set());
+            if (!sections.length) {
+                setAssignments([]);
+                return;
+            }
+            const roster = shuffle(HEROES);
+            setAssignments(
+                sections.map((section, i) => ({
+                    hero: roster[i % roster.length],
+                    slot: SLOTS[i % SLOTS.length],
+                    section,
+                }))
+            );
+        };
+        const raf = requestAnimationFrame(build);
+        return () => cancelAnimationFrame(raf);
+    }, [pathname]);
 
-    // Trigger each hero's entrance when its section first scrolls into view.
+    // Show a section's hero only while that section is on screen: reveal + play
+    // its entrance when it scrolls in, hide it again when it scrolls out.
     useEffect(() => {
         if (!assignments.length) return;
-        if (reduce) {
-            // reduced motion: reveal all settled poses immediately, no FX
-            setActiveIds(new Set(assignments.map((a) => a.hero.id)));
-            return;
-        }
-        const byNode = new Map(assignments.map((a) => [a.section, a]));
+        const idxByNode = new Map(assignments.map((a, i) => [a.section, i]));
+        visibleRef.current = new Set();
         const io = new IntersectionObserver(
             (entries) => {
+                let changed = false;
                 for (const entry of entries) {
-                    if (!entry.isIntersecting) continue;
-                    const a = byNode.get(entry.target as HTMLElement);
-                    if (!a) continue;
-                    io.unobserve(entry.target);
-                    setActiveIds((prev) => {
-                        if (prev.has(a.hero.id)) return prev;
-                        const next = new Set(prev);
-                        next.add(a.hero.id);
-                        return next;
-                    });
-                    if (a.hero.fx !== "none") setBurst({ fx: a.hero.fx, key: Date.now() });
+                    const idx = idxByNode.get(entry.target as HTMLElement);
+                    if (idx === undefined) continue;
+                    if (entry.isIntersecting) {
+                        if (visibleRef.current.has(idx)) continue;
+                        visibleRef.current.add(idx);
+                        changed = true;
+                        // one dramatic burst the first time this section appears,
+                        // from the hero's icon centre (Thor's storm plays through once)
+                        const a = assignments[idx];
+                        if (!reduce && a.hero.fx !== "none" && !seenRef.current.has(idx)) {
+                            seenRef.current.add(idx);
+                            setBurst({
+                                fx: a.hero.fx,
+                                accent: a.hero.accent,
+                                origin: iconCenter(a.slot, compact),
+                                key: Date.now(),
+                            });
+                        }
+                    } else if (visibleRef.current.has(idx)) {
+                        visibleRef.current.delete(idx);
+                        changed = true;
+                    }
                 }
+                if (changed) setVisible(new Set(visibleRef.current));
             },
-            { threshold: 0.3, rootMargin: "0px 0px -10% 0px" }
+            { threshold: 0.25, rootMargin: "0px 0px -10% 0px" }
         );
         assignments.forEach((a) => io.observe(a.section));
         return () => io.disconnect();
-    }, [assignments, reduce]);
+    }, [assignments, reduce, compact]);
 
-    // clear the page-wide burst shortly after it fires
+    // clear the burst shortly after it fires (each FX is a single one-shot play)
     useEffect(() => {
         if (!burst) return;
         const t = window.setTimeout(() => setBurst(null), 1900);
         return () => window.clearTimeout(t);
     }, [burst]);
 
+    // clicking a hero fires its signature WebGL FX from the icon's position
+    const fireFx = (fx: Fx, accent: string, origin: { x: number; y: number }) => {
+        if (fx !== "none") setBurst({ fx, accent, origin, key: Date.now() });
+    };
+
     return (
-        <div aria-hidden className="pointer-events-none fixed inset-0 -z-40 overflow-hidden">
-            <AnimatePresence>{burst && <GlobalFx key={burst.key} fx={burst.fx} />}</AnimatePresence>
-            {assignments.map((a) => (
+        <div
+            aria-hidden
+            // Desktop: sit ABOVE content (z-30, below header/chrome) so the icon
+            // hit-areas actually receive hover/click — the layer itself stays
+            // pointer-events-none, so only the icons intercept, the rest is
+            // click-through. Mobile: stay behind + faded (decorative) as before.
+            className={`pointer-events-none fixed inset-0 overflow-hidden ${
+                compact ? "-z-40" : "z-30"
+            }`}
+        >
+            {assignments.map((a, i) => (
                 <HeroSprite
-                    key={a.hero.id}
+                    key={i}
                     hero={a.hero}
                     slot={a.slot}
-                    active={activeIds.has(a.hero.id)}
+                    active={visible.has(i)}
                     reduce={!!reduce}
                     compact={compact}
+                    onAction={fireFx}
                 />
             ))}
+            {/* WebGL burst layer — plays each hero's signature effect on click /
+                entrance, from the icon's position. Idle (no render) otherwise. */}
+            <AvengersFx burst={burst} />
         </div>
     );
 }
@@ -159,16 +231,43 @@ function HeroSprite({
     active,
     reduce,
     compact,
+    onAction,
 }: {
     hero: Hero;
     slot: Slot;
     active: boolean;
     reduce: boolean;
     compact: boolean;
+    onAction: (fx: Fx, accent: string, origin: { x: number; y: number }) => void;
 }) {
     const [open, setOpen] = useState(false);
+    const [hovered, setHovered] = useState(false);
     const Pose = hero.Pose;
     const size = Math.round(slot.size * (compact ? 0.52 : 1));
+    // per-hero signature move (Cap's shield spins, Thor swings…) — replayed on
+    // both hover and click for lively, unmistakable feedback.
+    const action = useAnimationControls();
+    const onEnter = () => {
+        setOpen(true);
+        setHovered(true);
+        if (!reduce) action.start(getAction(hero.entrance));
+    };
+    const onLeave = () => {
+        reset();
+        setOpen(false);
+        setHovered(false);
+    };
+    const onClickHero = (e: React.MouseEvent<HTMLDivElement>) => {
+        setOpen((v) => !v);
+        if (reduce) return;
+        // fire the WebGL burst from the centre of the icon that was clicked
+        const r = e.currentTarget.getBoundingClientRect();
+        onAction(hero.fx, hero.accent, {
+            x: (r.left + r.width / 2) / window.innerWidth,
+            y: 1 - (r.top + r.height / 2) / window.innerHeight,
+        });
+        action.start(getAction(hero.entrance));
+    };
 
     // pseudo-3D tilt on hover
     const rx = useSpring(useMotionValue(0), { stiffness: 220, damping: 18 });
@@ -187,7 +286,30 @@ function HeroSprite({
     };
 
     const entrance = reduce ? undefined : getEntrance(hero.entrance, slot.side);
-    const settled = active || reduce;
+
+    // Drive show/hide imperatively so re-entering a section replays the FULL
+    // dramatic entrance (from off-screen) every time, while scrolling away always
+    // uses one calm, consistent fade-out — instead of abruptly reversing whatever
+    // dramatic entrance this hero happens to have.
+    const reveal = useAnimationControls();
+    useEffect(() => {
+        if (active) {
+            if (entrance) {
+                reveal.set(entrance.initial);
+                reveal.start({ ...entrance.animate, transition: entrance.transition });
+            } else {
+                reveal.start({ opacity: 1, transition: { duration: 0.4 } });
+            }
+        } else {
+            reveal.start({
+                opacity: 0,
+                scale: 0.82,
+                transition: { duration: 0.4, ease: "easeInOut" },
+            });
+        }
+        // entrance is recreated each render; we intentionally react only to `active`
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [active]);
 
     return (
         <div
@@ -203,16 +325,7 @@ function HeroSprite({
         >
             <motion.div
                 initial={entrance ? entrance.initial : { opacity: 0 }}
-                animate={
-                    settled
-                        ? entrance
-                            ? entrance.animate
-                            : { opacity: 1 }
-                        : entrance
-                            ? entrance.initial
-                            : { opacity: 0 }
-                }
-                transition={entrance ? entrance.transition : { duration: 0.4 }}
+                animate={reveal}
                 className="h-full w-full will-change-transform"
             >
                 {/* idle float */}
@@ -228,27 +341,54 @@ function HeroSprite({
                         aria-label={`${hero.name}: ${hero.dialog}`}
                         tabIndex={0}
                         onPointerMove={onMove}
-                        onPointerLeave={() => {
-                            reset();
-                            setOpen(false);
-                        }}
-                        onPointerEnter={() => setOpen(true)}
-                        onFocus={() => setOpen(true)}
-                        onBlur={() => setOpen(false)}
-                        onClick={() => setOpen((v) => !v)}
+                        onPointerLeave={onLeave}
+                        onPointerEnter={onEnter}
+                        onFocus={onEnter}
+                        onBlur={onLeave}
+                        onClick={onClickHero}
                     >
+                        {/* pulsing accent glow that blooms while hovered */}
+                        <motion.div
+                            aria-hidden
+                            className="pointer-events-none absolute inset-[-15%] rounded-full"
+                            style={{ background: `radial-gradient(circle, ${hero.accent}66, transparent 70%)` }}
+                            animate={
+                                hovered && !reduce
+                                    ? { opacity: [0.35, 0.75, 0.35], scale: [1, 1.12, 1] }
+                                    : { opacity: 0, scale: 0.8 }
+                            }
+                            transition={
+                                hovered && !reduce
+                                    ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" }
+                                    : { duration: 0.3 }
+                            }
+                        />
                         <motion.div
                             style={{ rotateX: rx, rotateY: ry, opacity: compact ? 0.4 : 1 }}
                             className="h-full w-full"
                             aria-hidden
                         >
-                            <Pose
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    filter: `drop-shadow(0 10px 22px ${hero.accent}55)`,
-                                }}
-                            />
+                            {/* signature click move layer */}
+                            <motion.div animate={action} className="h-full w-full">
+                                {/* lively hover / press reaction (its own layer so it
+                                    composes with the tilt above and the click move) */}
+                                <motion.div
+                                    className="h-full w-full"
+                                    whileHover={{ scale: 1.16, rotate: slot.side === "left" ? 4 : -4 }}
+                                    whileTap={{ scale: 0.94 }}
+                                    transition={{ type: "spring", stiffness: 320, damping: 13 }}
+                                >
+                                    <Pose
+                                        style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            // tighter shadow → crisper silhouette (the old
+                                            // 22px halo blurred the busier poses, e.g. Spider)
+                                            filter: `drop-shadow(0 6px 12px ${hero.accent}40)`,
+                                        }}
+                                    />
+                                </motion.div>
+                            </motion.div>
                         </motion.div>
                         <HeroDialog hero={hero} open={open} side={slot.side} />
                     </div>
@@ -256,6 +396,32 @@ function HeroSprite({
             </motion.div>
         </div>
     );
+}
+
+/* ---------------------------- signature click move ------------------------- */
+// Replayed each time a settled hero is clicked. The page-wide FX (thunder,
+// portal, shockwave, …) is fired separately via onAction(hero.fx).
+function getAction(entrance: Hero["entrance"]): TargetAndTransition {
+    switch (entrance) {
+        case "shield": // Captain America — spin the shield
+            return { rotate: [0, 360], transition: { duration: 0.7, ease: "easeInOut" } };
+        case "hammer": // Thor — swing Mjolnir (thunder fires via fx)
+            return { rotate: [0, -12, 12, -6, 0], scale: [1, 1.12, 1], transition: { duration: 0.7 } };
+        case "smash": // Hulk — pound down
+            return { y: [0, -22, 0], scale: [1, 1.18, 0.94, 1], transition: { duration: 0.55, ease: "easeOut" } };
+        case "fly": // Iron Man — thruster hop
+            return { y: [0, -26, 0], rotate: [0, 8, -8, 0], transition: { duration: 0.7 } };
+        case "swing": // Spider-Man — web swing
+            return { rotate: [0, -16, 16, 0], y: [0, -14, 0], transition: { duration: 0.7 } };
+        case "portal": // Dr Strange — spin the sling ring
+            return { rotate: [0, 360], scale: [1, 0.9, 1], transition: { duration: 0.8, ease: "easeInOut" } };
+        case "gauntlet": // Thanos — snap
+            return { scale: [1, 0.82, 1.14, 1], rotate: [0, -5, 5, 0], transition: { duration: 0.6 } };
+        case "illusion": // Loki / Doom — flicker into copies
+            return { opacity: [1, 0.25, 1, 0.4, 1], x: [0, -10, 10, -4, 0], transition: { duration: 0.7 } };
+        default:
+            return { scale: [1, 1.12, 1], transition: { duration: 0.4 } };
+    }
 }
 
 /* ------------------------------ entrance specs ----------------------------- */
@@ -316,82 +482,4 @@ function getEntrance(
                 transition: { duration: 1.1, ease: "easeInOut", times: [0, 0.4, 0.7, 1] },
             };
     }
-}
-
-/* ------------------------------- global FX --------------------------------- */
-
-function GlobalFx({ fx }: { fx: Fx }) {
-    if (fx === "lightning") {
-        return (
-            <motion.div className="absolute inset-0" initial={{ opacity: 0 }} exit={{ opacity: 0 }}>
-                {/* storm darken + white flashes */}
-                <motion.div
-                    className="absolute inset-0 bg-white"
-                    animate={{ opacity: [0, 0.55, 0, 0.35, 0] }}
-                    transition={{ duration: 1.4, times: [0, 0.15, 0.3, 0.45, 1] }}
-                />
-                <motion.svg
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                    className="absolute inset-0 h-full w-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: [0, 1, 0.2, 1, 0] }}
-                    transition={{ duration: 1.4, times: [0, 0.15, 0.35, 0.5, 1] }}
-                >
-                    <polyline points="20,0 26,22 16,26 30,55" fill="none" stroke="#fde047" strokeWidth="0.8" />
-                    <polyline points="62,0 56,20 68,24 54,50" fill="none" stroke="#fde047" strokeWidth="0.8" />
-                    <polyline points="84,0 78,28 88,32 74,60" fill="none" stroke="#fef9c3" strokeWidth="0.6" />
-                </motion.svg>
-            </motion.div>
-        );
-    }
-    if (fx === "portal") {
-        return (
-            <motion.div
-                className="absolute left-1/2 top-1/3 h-[40vmax] w-[40vmax] -translate-x-1/2 -translate-y-1/2 rounded-full"
-                style={{ border: "6px solid #fbbf24", boxShadow: "0 0 80px 20px rgba(251,191,36,0.4)" }}
-                initial={{ scale: 0, opacity: 0, rotate: 0 }}
-                animate={{ scale: 1, opacity: [0, 0.7, 0], rotate: 120 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1.6, ease: "easeOut" }}
-            />
-        );
-    }
-    if (fx === "thruster") {
-        return (
-            <motion.div
-                className="absolute inset-0"
-                style={{ background: "radial-gradient(circle at 50% 60%, rgba(245,158,11,0.35), transparent 55%)" }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.8, 0] }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1.3 }}
-            />
-        );
-    }
-    if (fx === "shock") {
-        return (
-            <motion.div
-                className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full"
-                style={{ border: "4px solid #a855f7" }}
-                initial={{ scale: 0, opacity: 0.8 }}
-                animate={{ scale: 14, opacity: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-            />
-        );
-    }
-    if (fx === "illusion") {
-        return (
-            <motion.div
-                className="absolute inset-0"
-                style={{ background: "radial-gradient(circle at 50% 45%, rgba(21,128,61,0.3), transparent 60%)" }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.7, 0, 0.4, 0] }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1.6, times: [0, 0.3, 0.5, 0.7, 1] }}
-            />
-        );
-    }
-    return null;
 }

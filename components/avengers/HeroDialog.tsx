@@ -25,7 +25,12 @@ export default function HeroDialog({
                     animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
                     exit={{ opacity: 0, scale: 0.5, y: 8 }}
                     transition={{ type: "spring", stiffness: 520, damping: 18 }}
-                    className="pointer-events-none absolute -top-3 left-1/2 z-10 -translate-x-1/2 -translate-y-full"
+                    // Anchor to the icon's INNER edge so the (nowrap) bubble always
+                    // grows toward the screen centre — a centered bubble on a
+                    // right-column hero ran off the right edge.
+                    className={`pointer-events-none absolute -top-3 z-10 max-w-[70vw] -translate-y-full ${
+                        side === "left" ? "left-0" : "right-0"
+                    }`}
                 >
                     <div
                         className="relative whitespace-nowrap rounded-2xl border-[3px] border-black bg-white px-4 py-2 font-comic text-lg tracking-wide text-black"
