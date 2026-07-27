@@ -207,7 +207,7 @@ export default function AvengersBackground() {
         >
             {assignments.map((a, i) => (
                 <HeroSprite
-                    key={i}
+                    key={`${a.hero.id}-${i}`}
                     hero={a.hero}
                     slot={a.slot}
                     active={visible.has(i)}
@@ -257,16 +257,24 @@ function HeroSprite({
         setOpen(false);
         setHovered(false);
     };
-    const onClickHero = (e: React.MouseEvent<HTMLDivElement>) => {
+    // shared by click and Enter/Space so the icon is fully keyboard-operable
+    const activate = (target: HTMLElement) => {
         setOpen((v) => !v);
         if (reduce) return;
-        // fire the WebGL burst from the centre of the icon that was clicked
-        const r = e.currentTarget.getBoundingClientRect();
+        // fire the WebGL burst from the centre of the icon that was activated
+        const r = target.getBoundingClientRect();
         onAction(hero.fx, hero.accent, {
             x: (r.left + r.width / 2) / window.innerWidth,
             y: 1 - (r.top + r.height / 2) / window.innerHeight,
         });
         action.start(getAction(hero.entrance));
+    };
+    const onClickHero = (e: React.MouseEvent<HTMLDivElement>) => activate(e.currentTarget);
+    const onKeyDownHero = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+            e.preventDefault();
+            activate(e.currentTarget);
+        }
     };
 
     // pseudo-3D tilt on hover
@@ -328,16 +336,16 @@ function HeroSprite({
                 animate={reveal}
                 className="h-full w-full will-change-transform"
             >
-                {/* idle float */}
+                {/* idle float — only ticks while the hero is actually on screen */}
                 <motion.div
-                    animate={reduce ? undefined : { y: [0, -7, 0] }}
+                    animate={active && !reduce ? { y: [0, -7, 0] } : { y: 0 }}
                     transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
                     className="relative h-full w-full"
                 >
                     {/* interactive hit-area (only pointer-events target on the whole layer) */}
                     <div
                         className="pointer-events-auto h-full w-full cursor-pointer"
-                        role="img"
+                        role="button"
                         aria-label={`${hero.name}: ${hero.dialog}`}
                         tabIndex={0}
                         onPointerMove={onMove}
@@ -346,6 +354,7 @@ function HeroSprite({
                         onFocus={onEnter}
                         onBlur={onLeave}
                         onClick={onClickHero}
+                        onKeyDown={onKeyDownHero}
                     >
                         {/* pulsing accent glow that blooms while hovered */}
                         <motion.div

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAnimationMode } from './animation-mode/AnimationModeProvider'
 
 /**
@@ -13,6 +13,12 @@ export default function AnimationModeSwitch() {
   const { mode, setMode } = useAnimationMode()
   const [pow, setPow] = useState(false)
 
+  useEffect(() => {
+    if (!pow) return
+    const t = window.setTimeout(() => setPow(false), 950)
+    return () => window.clearTimeout(t)
+  }, [pow])
+
   // null until mounted — render a neutral placeholder so the layout doesn't shift
   if (mode === null) {
     return <span className="block h-6 w-6 md:h-8 md:w-8" aria-hidden />
@@ -23,10 +29,7 @@ export default function AnimationModeSwitch() {
   const onClick = () => {
     const next = isAvengers ? 'default' : 'avengers'
     setMode(next)
-    if (next === 'avengers') {
-      setPow(true)
-      window.setTimeout(() => setPow(false), 950)
-    }
+    if (next === 'avengers') setPow(true)
   }
 
   return (

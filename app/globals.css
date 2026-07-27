@@ -367,7 +367,9 @@ body {
   .enter-rise-blur,
   .enter-wipe,
   .enter-pop,
-  .enter-fade {
+  .enter-fade,
+  .animate-aurora-drift,
+  .animate-aurora-drift-alt {
     animation: none !important;
   }
 
