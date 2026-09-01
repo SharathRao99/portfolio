@@ -19,10 +19,40 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        // The brand accent hues are routed through CSS variables (default values
+        // match Tailwind's originals exactly, so default mode is unchanged) so
+        // that Avengers mode can flip the whole accent palette in one place —
+        // every shade/opacity/utility inherits it automatically. See the
+        // `--acc-*` defaults in globals.css and the overrides in avengers.css.
+        cyan: {
+          300: "rgb(var(--acc-cyan-300) / <alpha-value>)",
+          400: "rgb(var(--acc-cyan-400) / <alpha-value>)",
+          500: "rgb(var(--acc-cyan-500) / <alpha-value>)",
+          600: "rgb(var(--acc-cyan-600) / <alpha-value>)",
+        },
+        indigo: {
+          300: "rgb(var(--acc-indigo-300) / <alpha-value>)",
+          400: "rgb(var(--acc-indigo-400) / <alpha-value>)",
+          500: "rgb(var(--acc-indigo-500) / <alpha-value>)",
+        },
+        fuchsia: {
+          300: "rgb(var(--acc-fuchsia-300) / <alpha-value>)",
+          400: "rgb(var(--acc-fuchsia-400) / <alpha-value>)",
+          500: "rgb(var(--acc-fuchsia-500) / <alpha-value>)",
+        },
+        sky: {
+          400: "rgb(var(--acc-sky-400) / <alpha-value>)",
+          500: "rgb(var(--acc-sky-500) / <alpha-value>)",
+        },
+        blue: {
+          400: "rgb(var(--acc-blue-400) / <alpha-value>)",
+          600: "rgb(var(--acc-blue-600) / <alpha-value>)",
+        },
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui"],
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+        comic: ["var(--font-comic)", "var(--font-geist-sans)", "system-ui", "sans-serif"],
       },
       keyframes: {
         "aurora-drift": {
@@ -78,8 +108,8 @@ const config: Config = {
         "caret-blink": "caret-blink 1.1s linear infinite",
       },
       boxShadow: {
-        "glow-sm": "0 0 24px -6px rgba(129, 140, 248, 0.45)",
-        glow: "0 0 48px -8px rgba(129, 140, 248, 0.5)",
+        "glow-sm": "0 0 24px -6px rgb(var(--acc-indigo-400) / 0.45)",
+        glow: "0 0 48px -8px rgb(var(--acc-indigo-400) / 0.5)",
         "card-float":
           "0 24px 60px -20px rgba(5, 6, 13, 0.45), 0 8px 20px -12px rgba(5, 6, 13, 0.3)",
       },

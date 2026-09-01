@@ -1,3 +1,5 @@
+@import "./avengers.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,6 +14,24 @@
   --glow-2: rgba(129, 140, 248, 0.22);
   --glow-3: rgba(232, 121, 249, 0.16);
   --spotlight: rgba(99, 102, 241, 0.08);
+
+  /* brand accent scales (space-separated RGB for Tailwind's <alpha-value>).
+     Defaults are Tailwind's own cyan/indigo/fuchsia/sky/blue — do not change
+     these; Avengers mode overrides them in avengers.css. */
+  --acc-cyan-300: 103 232 249;
+  --acc-cyan-400: 34 211 238;
+  --acc-cyan-500: 6 182 212;
+  --acc-cyan-600: 8 145 178;
+  --acc-indigo-300: 165 180 252;
+  --acc-indigo-400: 129 140 248;
+  --acc-indigo-500: 99 102 241;
+  --acc-fuchsia-300: 240 171 252;
+  --acc-fuchsia-400: 232 121 249;
+  --acc-fuchsia-500: 217 70 239;
+  --acc-sky-400: 56 189 248;
+  --acc-sky-500: 14 165 233;
+  --acc-blue-400: 96 165 250;
+  --acc-blue-600: 37 99 235;
 }
 
 .dark {
@@ -95,7 +115,7 @@ body {
     bottom: -2px;
     height: 1px;
     width: 100%;
-    background: linear-gradient(to right, #22d3ee, #818cf8, #e879f9);
+    background: linear-gradient(to right, rgb(var(--acc-cyan-400)), rgb(var(--acc-indigo-400)), rgb(var(--acc-fuchsia-400)));
     transform: scaleX(0);
     transform-origin: right;
     transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
@@ -347,7 +367,9 @@ body {
   .enter-rise-blur,
   .enter-wipe,
   .enter-pop,
-  .enter-fade {
+  .enter-fade,
+  .animate-aurora-drift,
+  .animate-aurora-drift-alt {
     animation: none !important;
   }
 

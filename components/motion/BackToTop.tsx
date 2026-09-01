@@ -45,8 +45,8 @@ export default function BackToTop() {
                         />
                         <defs>
                             <linearGradient id="btt-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#22d3ee" />
-                                <stop offset="100%" stopColor="#e879f9" />
+                                <stop offset="0%" style={{ stopColor: "rgb(var(--acc-cyan-400))" }} />
+                                <stop offset="100%" style={{ stopColor: "rgb(var(--acc-fuchsia-400))" }} />
                             </linearGradient>
                         </defs>
                     </svg>

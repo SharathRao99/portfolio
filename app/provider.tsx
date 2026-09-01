@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from 'next-themes'
 import { MotionConfig } from 'framer-motion'
+import { AnimationModeProvider } from '@/components/animation-mode/AnimationModeProvider'
 
 /**
  * The provider tree is rendered once. It used to gate ThemeProvider behind a
@@ -16,7 +17,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return (
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             {/* reducedMotion="user": every framer animation honors the OS setting */}
-            <MotionConfig reducedMotion="user">{children}</MotionConfig>
+            <MotionConfig reducedMotion="user">
+                <AnimationModeProvider>{children}</AnimationModeProvider>
+            </MotionConfig>
         </ThemeProvider>
     )
 }

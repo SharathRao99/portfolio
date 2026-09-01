@@ -4,9 +4,16 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useTheme } from "next-themes";
+import { useAnimationMode } from "./animation-mode/AnimationModeProvider";
 
 // WebGL layer is heavy — load it lazily, client-only
 const ParticleField = dynamic(() => import("./three/ParticleField"), { ssr: false });
+
+// Avengers layer is only ever fetched for visitors who opt into that mode, so
+// default-mode traffic never pays for it (protects the Lighthouse baseline).
+const AvengersBackground = dynamic(() => import("./avengers/AvengersBackground"), {
+    ssr: false,
+});
 
 // 2× the gradient's 600px radius, so the baked box covers the full falloff
 const SPOTLIGHT_SIZE = 1200;
@@ -21,6 +28,10 @@ const SPOTLIGHT_SIZE = 1200;
  */
 export default function BackgroundAnimation() {
     const { resolvedTheme } = useTheme();
+    const { mode } = useAnimationMode();
+    // `mode` is null until mounted; treat that as the default so the first paint
+    // matches the SSR markup (the aurora carries the look either way).
+    const isAvengers = mode === "avengers";
     const [showWebGL, setShowWebGL] = useState(false);
 
     const mouseX = useMotionValue(-600);
@@ -90,6 +101,7 @@ export default function BackgroundAnimation() {
     const spotY = useTransform(springY, (v) => v - SPOTLIGHT_SIZE / 2);
 
     return (
+        <>
         <div aria-hidden className="noise fixed inset-0 -z-50 overflow-hidden">
             {/* aurora blobs */}
             <div
@@ -105,8 +117,9 @@ export default function BackgroundAnimation() {
                 style={{ background: "radial-gradient(circle at center, var(--glow-3), transparent 60%)" }}
             />
 
-            {/* WebGL depth layer */}
-            {showWebGL && <ParticleField isDark={resolvedTheme !== "light"} />}
+            {/* WebGL depth layer — default mode only; Avengers mode swaps in its
+                own (lighter, SVG) hero layer instead of the three.js field */}
+            {showWebGL && !isAvengers && <ParticleField isDark={resolvedTheme !== "light"} />}
 
             {/* structural grid, radially masked so it stays quiet */}
             <div
@@ -133,5 +146,11 @@ export default function BackgroundAnimation() {
                 }}
             />
         </div>
+
+        {/* Avengers hero layer — rendered OUTSIDE the -z-50 background so its
+            own z-30 actually sits above page content (icons become hoverable /
+            clickable); the -z-50 wrapper would otherwise trap it behind #content. */}
+        {isAvengers && <AvengersBackground />}
+        </>
     );
 }
