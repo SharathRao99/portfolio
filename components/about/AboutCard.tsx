@@ -5,10 +5,10 @@ import RevealText from "@/components/motion/RevealText";
 import GhostWord from "@/components/motion/GhostWord";
 
 const paragraphOne =
-    "My journey in software development began with a fascination for creating digital solutions that make a real difference. As a Full-Stack Developer, I've spent the last 3+ years turning complex problems into elegant solutions, working across the entire development spectrum from intuitive user interfaces to robust backend systems. I'm driven by the endless possibilities that technology offers and the rapid evolution of the development landscape.";
+    "My journey in software development began with a fascination for creating digital solutions that make a real difference. As a Full-Stack Developer, I've spent the last 3+ years turning business requirements into production software, from planning and architecture through to delivery, across React, Next.js, Node.js and Python. I'm driven by the endless possibilities that technology offers and the rapid evolution of the development landscape.";
 
 const paragraphTwo =
-    "What excites me most about this industry is the opportunity to blend creativity with technical precision. Whether I'm architecting database solutions, implementing secure payment systems, or crafting seamless user experiences, I approach each project as a chance to innovate and excel. I believe in writing code that not only works but stands the test of time, focusing on maintainability and scalability in everything I build.";
+    "What excites me most about this industry is the opportunity to blend creativity with technical precision. Whether I'm designing multi-tenant platforms with role-based access, building payment and booking systems, shipping e-signature workflows, or integrating AI features, I approach each project as a chance to innovate and excel. I believe in writing code that not only works but stands the test of time, focusing on maintainability and scalability in everything I build.";
 
 export default function AboutCard() {
     return (

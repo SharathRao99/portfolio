@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
     title: 'Projects',
-    description: 'Explore my portfolio of projects including Recruitment Management Systems, Parental Control Apps, and E-commerce Platforms.',
+    description: 'Explore my portfolio of projects including a donor-funded ad platform, a learning and commerce marketplace, an e-signature document platform, and personal projects in AI video generation and hiring/HR.',
     alternates: { canonical: '/projects' },
     openGraph: {
         title: 'Projects | Sharath B C',
@@ -19,14 +19,7 @@ export default function ProjectsPage() {
         <div>
             <ProjectsHero />
             {projectsPageData.map((project, index) => (
-                <ProjectStructure
-                    key={index}
-                    index={index}
-                    title={project.title}
-                    description={project.description}
-                    keyContributions={project.keyContributions}
-                    coreFeatures={project.coreFeatures}
-                />
+                <ProjectStructure key={project.title} index={index} {...project} />
             ))}
             {/* breathing room so the last stacked card can scroll clear */}
             <div className="h-16 md:h-24" />

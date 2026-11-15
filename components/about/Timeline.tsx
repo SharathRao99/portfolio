@@ -12,8 +12,11 @@ export interface TimelineEntry {
     location: string;
     period: string;
     description: string;
-    logoPath: string;
+    /** Omit when there is no logo; initials are shown instead. */
+    logoPath?: string;
     logoOnLight?: boolean;
+    /** For wide wordmark logos: renders a wider tile instead of a square one. */
+    logoWide?: boolean;
 }
 
 /**
@@ -73,17 +76,26 @@ export default function Timeline({ heading, entries }: { heading: string; entrie
                                                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                                                 viewport={{ once: true, amount: 0.5 }}
                                                 transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.2 }}
-                                                className={`h-20 w-20 shrink-0 overflow-hidden rounded-2xl p-2 ${
-                                                    entry.logoOnLight ? "bg-white" : "glass-light"
-                                                }`}
+                                                className={`h-20 shrink-0 overflow-hidden rounded-2xl p-2 ${
+                                                    entry.logoWide ? "w-44 px-3" : "w-20"
+                                                } ${entry.logoOnLight ? "bg-white" : "glass-light"}`}
                                             >
-                                                <Image
-                                                    src={entry.logoPath}
-                                                    alt={entry.org}
-                                                    width={80}
-                                                    height={80}
-                                                    className="h-full w-full rounded-xl object-contain"
-                                                />
+                                                {entry.logoPath ? (
+                                                    <Image
+                                                        src={entry.logoPath}
+                                                        alt={entry.org}
+                                                        width={entry.logoWide ? 160 : 80}
+                                                        height={80}
+                                                        className="h-full w-full rounded-xl object-contain"
+                                                    />
+                                                ) : (
+                                                    <span
+                                                        aria-hidden
+                                                        className="flex h-full w-full items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400/30 to-fuchsia-400/30 text-2xl font-black text-gradient"
+                                                    >
+                                                        {entry.org.charAt(0)}
+                                                    </span>
+                                                )}
                                             </motion.div>
                                             <div>
                                                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

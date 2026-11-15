@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     default: "Sharath B C | Full Stack Developer",
     template: "%s | Sharath B C",
   },
-  description: "Full-Stack Developer with 3+ years of hands-on experience in frontend, backend, and mobile app development. Specialist in React.js, Next.js, and Node.js.",
+  description: "Full-Stack Developer with 3+ years of experience building production software with React, Next.js, Node.js and Python: payment and booking systems, multi-tenant platforms, e-signature workflows and AI-integrated features.",
   keywords: [
     "Sharath B C",
     "Full Stack Developer",

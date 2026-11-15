@@ -2,15 +2,12 @@
 import { motion, type Variants } from "framer-motion";
 import RevealText from "@/components/motion/RevealText";
 import GlowCard from "@/components/motion/GlowCard";
+import type { ProjectData } from "@/lib/data";
 
 const slugify = (text: string) =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-interface ProjectStructureProps {
-    title: string;
-    description: string;
-    keyContributions: string[];
-    coreFeatures: string[];
+interface ProjectStructureProps extends ProjectData {
     index?: number;
 }
 
@@ -34,7 +31,11 @@ const listItem: Variants = {
  */
 export default function ProjectStructure({
     title,
+    category,
     description,
+    note,
+    stack,
+    link,
     keyContributions,
     coreFeatures,
     index = 0,
@@ -70,6 +71,10 @@ export default function ProjectStructure({
                             {String(index + 1).padStart(2, "0")}
                         </span>
 
+                        <p className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+                            <span className="text-gradient font-semibold">{category}</span>
+                            {note && <span>· {note}</span>}
+                        </p>
                         <RevealText
                             as="h2"
                             text={title}
@@ -84,6 +89,24 @@ export default function ProjectStructure({
                         >
                             {description}
                         </motion.p>
+
+                        <ul className="mt-6 flex flex-wrap gap-2">
+                            {stack.map((tech) => (
+                                <li key={tech} className="glass-light rounded-full px-3 py-1 font-mono text-[11px] text-muted">
+                                    {tech}
+                                </li>
+                            ))}
+                        </ul>
+                        {link && (
+                            <a
+                                href={link.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-5 inline-block text-sm font-semibold text-gradient underline-offset-4 hover:underline"
+                            >
+                                {link.label} ↗
+                            </a>
+                        )}
 
                         <div className="mt-10 grid gap-10 md:grid-cols-2">
                             <FeatureList
