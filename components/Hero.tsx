@@ -101,7 +101,7 @@ const CODE_LINES = [
     "const sharath = {",
     '  role: "Full-Stack Developer",',
     '  experience: "3+ years",',
-    '  stack: ["React", "Next.js", "Node"],',
+    '  stack: ["React", "Next.js", "Node", "Python"],',
     '  ships: () => "end-to-end products",',
     "};",
 ];
@@ -114,7 +114,7 @@ const COLORED_LINES = [
     <><span className="text-fuchsia-500 dark:text-fuchsia-400">const</span> <span className="text-cyan-600 dark:text-cyan-300">sharath</span> = {"{"}</>,
     <>  role: <Str>&quot;Full-Stack Developer&quot;</Str>,</>,
     <>  experience: <Str>&quot;3+ years&quot;</Str>,</>,
-    <>  stack: [<Str>&quot;React&quot;</Str>, <Str>&quot;Next.js&quot;</Str>, <Str>&quot;Node&quot;</Str>],</>,
+    <>  stack: [<Str>&quot;React&quot;</Str>, <Str>&quot;Next.js&quot;</Str>, <Str>&quot;Node&quot;</Str>, <Str>&quot;Python&quot;</Str>],</>,
     <>  ships: () <span className="text-fuchsia-500 dark:text-fuchsia-400">=&gt;</span> <Str>&quot;end-to-end products&quot;</Str>,</>,
     <>{"}"};</>,
 ];

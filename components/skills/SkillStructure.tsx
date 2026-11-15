@@ -7,7 +7,10 @@ import GlowCard from "@/components/motion/GlowCard";
 
 type SkillSet = {
     name: string;
-    image: string;
+    /** Omit when there is no icon; a monogram is shown instead. */
+    image?: string;
+    /** Monogram text when there is no image (defaults to the first letters of the name). */
+    mark?: string;
     rating: number;
 };
 
@@ -95,13 +98,22 @@ function SkillRing({ skill, delay }: { skill: SkillSet; delay: number }) {
                     </defs>
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <Image
-                        src={skill.image}
-                        alt={skill.name}
-                        width={36}
-                        height={36}
-                        className="h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110"
-                    />
+                    {skill.image ? (
+                        <Image
+                            src={skill.image}
+                            alt={skill.name}
+                            width={36}
+                            height={36}
+                            className="h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110"
+                        />
+                    ) : (
+                        <span
+                            aria-hidden
+                            className="text-gradient text-base font-black tracking-tight transition-transform duration-300 group-hover:scale-110"
+                        >
+                            {skill.mark ?? skill.name.slice(0, 2)}
+                        </span>
+                    )}
                 </div>
                 <div
                     aria-hidden

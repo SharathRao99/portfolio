@@ -20,7 +20,7 @@ export default function ProjectsHero() {
                     className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl"
                 />
                 <p className="mt-8 max-w-3xl text-base leading-relaxed text-muted md:text-lg">
-                    As a versatile Full-Stack Developer, I specialize in crafting comprehensive digital solutions using modern technologies like React.js, Next.js, and Node.js. From building responsive front-end interfaces to implementing secure backend systems with authentication and payment integrations, I bring ideas to life through clean, efficient code. My experience spans web and mobile development, allowing me to deliver seamless experiences across all platforms.
+                    As a versatile Full-Stack Developer, I specialize in crafting comprehensive digital solutions using React, Next.js, Node.js and Python. From responsive front-end interfaces to secure backend systems with authentication, payments and AI integrations, I bring ideas to life through clean, efficient code. My experience spans web and mobile development, allowing me to deliver seamless experiences across all platforms.
                 </p>
 
                 <div className="mt-10 flex flex-wrap gap-4">
@@ -35,7 +35,7 @@ export default function ProjectsHero() {
                 </div>
 
                 <p className="mt-8 text-sm text-muted">
-                    Below are three of the most complex systems I&apos;ve built end-to-end.
+                    Below are the systems I&apos;ve worked on at Zibtek, my personal projects, and my earlier work at Raw Conscious. Where a project was a team effort, I&apos;ve listed only my own contributions.
                 </p>
             </div>
         </AnimatedSection>
