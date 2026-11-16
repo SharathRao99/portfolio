@@ -25,10 +25,17 @@ export default function Header() {
     setScrolled(latest > 24)
   })
 
+  // Lock page scroll while the menu is open. Lock <html> as well as <body>
+  // (iOS Safari ignores body-only locks) and restore with '' rather than
+  // 'unset': 'unset' overrides the stylesheet and wiped body's overflow-x: clip.
   useEffect(() => {
-    document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset'
+    if (!isMenuOpen) return
+    const root = document.documentElement
+    root.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
     return () => {
-      document.body.style.overflow = 'unset'
+      root.style.overflow = ''
+      document.body.style.overflow = ''
     }
   }, [isMenuOpen])
 
@@ -43,7 +50,7 @@ export default function Header() {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.1 }}
-        className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4"
+        className="fixed inset-x-0 top-0 z-[87] flex justify-center px-4 pt-4"
       >
         <div
           className={`flex w-full max-w-[1200px] items-center justify-between rounded-2xl px-4 py-3 transition-all duration-500 md:px-6 ${
@@ -143,14 +150,17 @@ export default function Header() {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, clipPath: 'circle(0% at 100% 0%)' }}
-            animate={{ opacity: 1, clipPath: 'circle(150% at 100% 0%)' }}
-            exit={{ opacity: 0, clipPath: 'circle(0% at 100% 0%)' }}
-            transition={{ duration: 0.55, ease: [0.32, 0.72, 0, 1] }}
-            // z-40: stays *below* the header (z-50), so the hamburger/close
-            // toggle and the rest of the header bar remain visible and
-            // clickable while the menu is open
-            className="fixed inset-0 z-40 flex flex-col justify-between bg-background/95 px-8 pb-12 pt-32 backdrop-blur-2xl md:hidden"
+            initial={{ clipPath: 'circle(0% at 100% 0%)' }}
+            animate={{ clipPath: 'circle(150% at 100% 0%)' }}
+            exit={{ clipPath: 'circle(0% at 100% 0%)' }}
+            transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+            // z-[86]: above the floating back-to-top button (z-85) so it can't
+            // sit on top of the menu, but *below* the header (z-[87]) so the
+            // close toggle stays visible and clickable.
+            // Opaque and no backdrop-blur/opacity: combining those with an
+            // animated clip-path flickers on iOS Safari and let the page text
+            // show through mid-animation.
+            className="fixed inset-0 z-[86] flex flex-col justify-between overscroll-contain bg-background px-8 pb-12 pt-32 md:hidden"
           >
             <nav className="flex flex-col gap-1">
               {navLinks.map((link, i) => (
