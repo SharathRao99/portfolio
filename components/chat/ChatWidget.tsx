@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 type ModelStatus = "ready" | "waking" | "off";
-type Message = { role: "user" | "assistant"; content: string };
+type Message = { role: "user" | "assistant"; content: string; id?: string; vote?: 1 | -1 };
 
 const INTRO: Message = {
     role: "assistant",
@@ -19,6 +19,20 @@ const SUGGESTIONS = [
 ];
 
 const MAX_CHARS = 500;
+
+/** Random per-tab id so a conversation can be grouped in the log. Not tied to a person. */
+function sessionId(): string {
+    try {
+        let sid = sessionStorage.getItem("chat-sid");
+        if (!sid) {
+            sid = crypto.randomUUID();
+            sessionStorage.setItem("chat-sid", sid);
+        }
+        return sid;
+    } catch {
+        return "anon";
+    }
+}
 const WAKE_POLL_MS = 8000;
 const WAKE_GIVE_UP_MS = 3 * 60 * 1000;
 
@@ -36,6 +50,7 @@ export default function ChatWidget() {
     const [input, setInput] = useState("");
     const [pending, setPending] = useState(false);
     const [status, setStatus] = useState<ModelStatus>("off");
+    const [logging, setLogging] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const wakeStartedAt = useRef<number | null>(null);
@@ -59,8 +74,9 @@ export default function ChatWidget() {
     const checkStatus = useCallback(async () => {
         try {
             const res = await fetch("/api/chat", { cache: "no-store" });
-            const data = (await res.json()) as { modelStatus?: ModelStatus };
+            const data = (await res.json()) as { modelStatus?: ModelStatus; logging?: boolean };
             if (data.modelStatus) setStatus(data.modelStatus);
+            if (typeof data.logging === "boolean") setLogging(data.logging);
         } catch {
             // offline: leave the status as is
         }
@@ -112,7 +128,7 @@ export default function ChatWidget() {
         async (text: string) => {
             const question = text.trim().slice(0, MAX_CHARS);
             if (!question || pending) return;
-            const history = messages.filter((m) => m !== INTRO).slice(-4);
+            const history = messages.filter((m) => m !== INTRO).slice(-4).map(({ role, content }) => ({ role, content }));
             setMessages((prev) => [...prev, { role: "user", content: question }]);
             setInput("");
             setPending(true);
@@ -120,15 +136,15 @@ export default function ChatWidget() {
                 const res = await fetch("/api/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: question, history }),
+                    body: JSON.stringify({ message: question, history, sid: sessionId() }),
                 });
-                const data = (await res.json()) as { answer?: string; error?: string; modelStatus?: ModelStatus };
+                const data = (await res.json()) as { answer?: string; error?: string; modelStatus?: ModelStatus; id?: string };
                 if (data.modelStatus) setStatus(data.modelStatus);
                 const reply =
                     res.ok && data.answer
                         ? data.answer
                         : data.error ?? "Sorry, something went wrong. You can email Sharath directly.";
-                setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+                setMessages((prev) => [...prev, { role: "assistant", content: reply, id: res.ok ? data.id : undefined }]);
             } catch {
                 setMessages((prev) => [
                     ...prev,
@@ -139,6 +155,20 @@ export default function ChatWidget() {
             }
         },
         [messages, pending]
+    );
+
+    const vote = useCallback(
+        (index: number, value: 1 | -1) => {
+            const target = messages[index];
+            if (!target?.id || target.vote) return; // one vote per answer
+            setMessages((prev) => prev.map((m, i) => (i === index ? { ...m, vote: value } : m)));
+            void fetch("/api/chat/feedback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: target.id, value }),
+            }).catch(() => {});
+        },
+        [messages]
     );
 
     const showSuggestions = messages.length === 1;
@@ -188,7 +218,7 @@ export default function ChatWidget() {
 
                         <div ref={listRef} aria-live="polite" className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4">
                             {messages.map((m, i) => (
-                                <div key={i} data-msg={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                                <div key={i} data-msg={i} className={m.role === "user" ? "flex justify-end" : "flex flex-col items-start gap-1"}>
                                     <p
                                         className={`max-w-[85%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                                             m.role === "user"
@@ -198,6 +228,27 @@ export default function ChatWidget() {
                                     >
                                         {m.content}
                                     </p>
+                                    {m.role === "assistant" && m.id && (
+                                        <div className="flex items-center gap-1 pl-1 text-muted">
+                                            {([1, -1] as const).map((v) => (
+                                                <button
+                                                    key={v}
+                                                    onClick={() => vote(i, v)}
+                                                    disabled={m.vote !== undefined}
+                                                    aria-label={v === 1 ? "Helpful answer" : "Not helpful"}
+                                                    aria-pressed={m.vote === v}
+                                                    className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors hover:text-foreground disabled:cursor-default ${
+                                                        m.vote === v ? "text-indigo-500" : m.vote !== undefined ? "opacity-30" : ""
+                                                    }`}
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill={m.vote === v ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 ${v === -1 ? "rotate-180" : ""}`}>
+                                                        <path d="M7 10v12M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+                                                    </svg>
+                                                </button>
+                                            ))}
+                                            {m.vote !== undefined && <span className="pl-1 text-[10px]">Thanks!</span>}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             {pending && (
@@ -257,6 +308,11 @@ export default function ChatWidget() {
                                 </svg>
                             </button>
                         </form>
+                        {logging && (
+                            <p className="px-4 pb-2.5 text-center text-[10px] leading-snug text-muted">
+                                Questions are saved anonymously to improve answers. Please don&apos;t share personal details.
+                            </p>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

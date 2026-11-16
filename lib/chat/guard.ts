@@ -37,9 +37,9 @@ export interface ChatTurn {
 }
 
 /** Validates and trims untrusted client input. Returns null when unusable. */
-export function parseChatBody(body: unknown): { question: string; history: ChatTurn[] } | null {
+export function parseChatBody(body: unknown): { question: string; history: ChatTurn[]; sid: string } | null {
     if (!body || typeof body !== "object") return null;
-    const { message, history } = body as { message?: unknown; history?: unknown };
+    const { message, history, sid } = body as { message?: unknown; history?: unknown; sid?: unknown };
     if (typeof message !== "string") return null;
     const question = message.trim().slice(0, MAX_QUESTION_CHARS);
     if (!question) return null;
@@ -54,5 +54,7 @@ export function parseChatBody(body: unknown): { question: string; history: ChatT
             }
         }
     }
-    return { question, history: turns };
+    // random per-tab id used only to group a conversation in the log; anything malformed becomes "anon"
+    const session = typeof sid === "string" && /^[A-Za-z0-9-]{8,40}$/.test(sid) ? sid : "anon";
+    return { question, history: turns, sid: session };
 }

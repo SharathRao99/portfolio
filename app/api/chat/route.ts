@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
+import { after, NextResponse } from "next/server";
 import { answerFromFacts, isOffTopic } from "@/lib/chat/fallback";
 import { parseChatBody, rateLimit } from "@/lib/chat/guard";
+import { logChat, loggingEnabled } from "@/lib/chat/log";
 import { correctQuery, MIN_SCORE, retrieve } from "@/lib/chat/retrieve";
 
 export const runtime = "nodejs";
@@ -79,7 +81,7 @@ function clientKey(req: Request): string {
 }
 
 export async function GET() {
-    return NextResponse.json({ modelStatus: await modelStatus() });
+    return NextResponse.json({ modelStatus: await modelStatus(), logging: loggingEnabled });
 }
 
 export async function POST(req: Request) {
@@ -100,10 +102,20 @@ export async function POST(req: Request) {
     const parsed = parseChatBody(body);
     if (!parsed) return NextResponse.json({ error: "Please send a question." }, { status: 400 });
 
-    const { question, history } = parsed;
+    const { question, history, sid } = parsed;
+    const started = Date.now();
     const fixed = correctQuery(question);
     const hits = retrieve(fixed);
     const factsReply = answerFromFacts(question, hits);
+
+    // One place that answers AND records, so every answered question is logged (after the response is sent).
+    const finish = (answer: string, source: "model" | "facts", modelStatus: ModelStatus, note?: string) => {
+        const id = randomUUID();
+        after(() =>
+            logChat({ id, sid, q: question, a: answer, src: source, kind: factsReply.kind, sources: factsReply.sources, score: hits[0] ? Math.round(hits[0].score * 100) / 100 : 0, ms: Date.now() - started, modelStatus, note })
+        );
+        return NextResponse.json({ answer, source, modelStatus, id });
+    };
 
     // Greetings, refusals and "I don't have that" never need the model.
     // Skill answers are built from exact data (rating + projects), so the model can only make them worse.
@@ -111,18 +123,18 @@ export async function POST(req: Request) {
     const modelWorthCalling =
         factsReply.kind === "answer" && !deterministic && !isOffTopic(question) && hits[0]?.score >= MIN_SCORE;
     if (!modelWorthCalling) {
-        return NextResponse.json({ answer: factsReply.answer, source: "facts", modelStatus: await modelStatus() });
+        return finish(factsReply.answer, "facts", await modelStatus());
     }
 
     const status = await modelStatus();
     if (status === "ready") {
         const result = await askModel(fixed, history, hits.map((h) => h.chunk.text));
-        if (result.kind === "answer") return NextResponse.json({ answer: result.answer, source: "model", modelStatus: "ready" });
+        if (result.kind === "answer") return finish(result.answer, "model", "ready");
         if (result.kind === "unreachable") {
             lastStatus = { value: "waking", at: Date.now() };
-            return NextResponse.json({ answer: factsReply.answer, source: "facts", modelStatus: "waking" });
+            return finish(factsReply.answer, "facts", "waking", "model-unreachable");
         }
-        return NextResponse.json({ answer: factsReply.answer, source: "facts", modelStatus: "ready" });
+        return finish(factsReply.answer, "facts", "ready", "model-rejected");
     }
-    return NextResponse.json({ answer: factsReply.answer, source: "facts", modelStatus: status });
+    return finish(factsReply.answer, "facts", status);
 }
