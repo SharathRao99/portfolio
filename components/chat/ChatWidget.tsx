@@ -39,6 +39,22 @@ export default function ChatWidget() {
     const listRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const wakeStartedAt = useRef<number | null>(null);
+    const [nudge, setNudge] = useState(false);
+    const [hasOpened, setHasOpened] = useState(false);
+
+    // one friendly nudge per browser session, a few seconds after load; never again once dismissed or used
+    useEffect(() => {
+        if (sessionStorage.getItem("chat-nudged") === "1") return;
+        const show = setTimeout(() => {
+            setNudge(true);
+            sessionStorage.setItem("chat-nudged", "1");
+        }, 5000);
+        const hide = setTimeout(() => setNudge(false), 11000);
+        return () => {
+            clearTimeout(show);
+            clearTimeout(hide);
+        };
+    }, []);
 
     const checkStatus = useCallback(async () => {
         try {
@@ -53,6 +69,8 @@ export default function ChatWidget() {
     // opening the panel pings the model so it starts waking before the first question
     useEffect(() => {
         if (!open) return;
+        setNudge(false);
+        setHasOpened(true);
         wakeStartedAt.current ??= Date.now();
         void checkStatus();
         inputRef.current?.focus();
@@ -71,8 +89,16 @@ export default function ChatWidget() {
         return () => clearInterval(id);
     }, [open, status, checkStatus]);
 
+    // After the assistant replies, show the START of its answer (long answers used to be scrolled
+    // past their first lines); otherwise follow the conversation to the bottom.
     useEffect(() => {
-        listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+        const list = listRef.current;
+        if (!list) return;
+        const last = messages[messages.length - 1];
+        const el = last.role === "assistant" && !pending ? list.querySelector<HTMLElement>(`[data-msg="${messages.length - 1}"]`) : null;
+        // measure against the list itself (offsetTop is relative to the dialog, which has a header above the list)
+        const top = el ? list.scrollTop + (el.getBoundingClientRect().top - list.getBoundingClientRect().top) - 12 : list.scrollHeight;
+        list.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     }, [messages, pending]);
 
     useEffect(() => {
@@ -162,7 +188,7 @@ export default function ChatWidget() {
 
                         <div ref={listRef} aria-live="polite" className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4">
                             {messages.map((m, i) => (
-                                <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                                <div key={i} data-msg={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
                                     <p
                                         className={`max-w-[85%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                                             m.role === "user"
@@ -235,19 +261,71 @@ export default function ChatWidget() {
                 )}
             </AnimatePresence>
 
-            <motion.button
-                onClick={() => setOpen((v) => !v)}
-                aria-label={open ? "Close chat" : "Ask about Sharath"}
-                aria-expanded={open}
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.93 }}
-                className="glass-strong fixed bottom-6 left-4 z-[80] flex h-14 w-14 items-center justify-center rounded-full shadow-card-float"
-            >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-                    <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" />
-                    <path d="M9 11h6M9 14h3.5" />
-                </svg>
-            </motion.button>
+            <div className="fixed bottom-6 left-4 z-[80] flex flex-col items-start gap-3">
+                <AnimatePresence>
+                    {nudge && !open && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                            className="relative max-w-[16rem] rounded-2xl border border-black/10 bg-background py-3 pl-4 pr-8 text-sm leading-snug shadow-card-float dark:border-white/10"
+                        >
+                            <button
+                                onClick={() => setNudge(false)}
+                                aria-label="Dismiss"
+                                className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full text-muted hover:text-foreground"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="h-3 w-3">
+                                    <path d="M6 6l12 12M18 6L6 18" />
+                                </svg>
+                            </button>
+                            Hi 👋 Recruiters: ask me about Sharath&apos;s experience, skills, salary or availability.
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <motion.button
+                    onClick={() => setOpen((v) => !v)}
+                    aria-label={open ? "Close chat" : "Ask about Sharath"}
+                    aria-expanded={open}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="group relative flex items-center gap-2.5 rounded-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-fuchsia-500 py-2.5 pl-2.5 pr-5 text-white shadow-glow transition-shadow hover:shadow-glow"
+                >
+                    {/* a few attention pulses on load, then it settles (never loops forever) */}
+                    {!open && !hasOpened && (
+                        <span
+                            aria-hidden
+                            style={{ animationIterationCount: 4, animationDelay: "1.2s" }}
+                            className="absolute inset-0 -z-10 animate-ping rounded-full bg-indigo-400/50 motion-reduce:hidden"
+                        />
+                    )}
+                    <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                        {open ? (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="h-4 w-4">
+                                <path d="M6 6l12 12M18 6L6 18" />
+                            </svg>
+                        ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                                <path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 20.5l1.5-4.9A8.5 8.5 0 1 1 21 11.5Z" />
+                                <path d="M12 7.6l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="currentColor" stroke="none" />
+                            </svg>
+                        )}
+                        {!open && (
+                            <span aria-hidden className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
+                        )}
+                    </span>
+                    <span className="text-sm font-semibold tracking-tight">
+                        {open ? "Close" : (
+                            <>
+                                <span className="sm:hidden">Ask me</span>
+                                <span className="hidden sm:inline">Ask about Sharath</span>
+                            </>
+                        )}
+                    </span>
+                </motion.button>
+            </div>
         </>
     );
 }

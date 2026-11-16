@@ -33,6 +33,7 @@ export const recruiterFacts = {
     relocation:
         "Sharath is based in Bengaluru and is only open to relocating within Bengaluru, so on-site or hybrid roles need to be in Bengaluru. Fully remote roles work too.",
     contact: `The best way to reach Sharath is by email at ${personalInfo.email}. His resume can be downloaded with the "Download Resume" button in the site header.`,
+    location: "Sharath is currently based in Bengaluru, India.",
     links: "Sharath's LinkedIn is https://www.linkedin.com/in/sharath-b-c-45ba01203 and his GitHub is https://github.com/SharathRao99.",
 } as const;
 
@@ -43,7 +44,7 @@ const list = (items: string[]) => items.join("; ");
  * in third person, so convert. Covers the phrasings present in lib/data.ts;
  * anything unusual just stays as written, which is still correct, only less polished.
  */
-function thirdPerson(text: string): string {
+export function thirdPerson(text: string): string {
     return text
         .replace(/\bI build and maintain\b/g, "Sharath builds and maintains")
         .replace(/\bI've\b/g, "Sharath has")
@@ -76,9 +77,15 @@ function buildChunks(): Chunk[] {
             text: recruiterFacts.notice,
         },
         {
+            id: "location",
+            topic: "Current location",
+            keywords: "current currently location located based live lives living city where reside residence stay town place bengaluru bangalore india",
+            text: recruiterFacts.location,
+        },
+        {
             id: "relocation",
-            topic: "Location and relocation",
-            keywords: "relocate relocation location city based where live bengaluru bangalore move shift travel india",
+            topic: "Relocation",
+            keywords: "relocate relocation relocating move shift travel outside open willing other cities abroad bengaluru bangalore",
             text: recruiterFacts.relocation,
         },
         {
@@ -118,7 +125,7 @@ function buildChunks(): Chunk[] {
         chunks.push({
             id: "current-role",
             topic: "Current role",
-            keywords: "current currently now present role job company working where employer",
+            keywords: "current currently now present role job company working employer",
             text: `Sharath currently works as a ${current.title} at ${current.org} in ${current.location}, since ${current.period.split("—")[0].trim()}.`,
         });
     }

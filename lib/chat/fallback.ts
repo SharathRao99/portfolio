@@ -1,5 +1,5 @@
-import { recruiterFacts } from "@/lib/chat/knowledge";
-import { MIN_SCORE, retrieve, type Hit } from "@/lib/chat/retrieve";
+import { recruiterFacts, thirdPerson } from "@/lib/chat/knowledge";
+import { correctQuery, MIN_SCORE, retrieve, type Hit } from "@/lib/chat/retrieve";
 import { personalInfo, projectsPageData, skillsPageData } from "@/lib/data";
 
 /**
@@ -56,6 +56,46 @@ const techs: Tech[] = (() => {
 
 const projectTitles = projectsPageData.map((p) => norm(p.title));
 
+// "explain more", "how did he use it in his projects", "tell me more about his Stripe experience"
+const DETAIL_CUE =
+    /\b(explain|elaborate|more|details?|examples?|how (has|have|did|does|do|was|were)?\s*(he|sharath)?\s*(use|used|using|apply|applied|work|worked)|used (it )?in|projects?)\b/i;
+
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** First sentence of `text` that mentions `word` (whole word), clipped. */
+function sentenceWith(text: string, word: string): string | null {
+    // "React" must not match "React Native", which is a different skill
+    const notNative = word.toLowerCase() === "react" ? "(?!\\s+Native)" : "";
+    const re = new RegExp(`(^|[^A-Za-z0-9])${escapeRe(word)}${notNative}([^A-Za-z0-9]|$)`, "i");
+    const hit = text.split(/(?<=[.!?])\s+/).find((s) => re.test(s));
+    if (!hit) return null;
+    return hit.length > 240 ? hit.slice(0, 237).replace(/\s+\S*$/, "") + "…" : hit;
+}
+
+/** Where and how a technology was used, built only from the project data. */
+function techDetail(tech: Tech): string | null {
+    const base = tech.name.replace(/\s+\d+$/, "");
+    const bullets: string[] = [];
+    for (const p of projectsPageData) {
+        const inStack = p.stack.some((s) => norm(s).replace(/ \d+$/, "") === norm(base).replace(/ \d+$/, ""));
+        let line: string | null = null;
+        for (const c of p.keyContributions) {
+            const s = sentenceWith(thirdPerson(c), base);
+            if (s) { line = `Sharath ${lowerFirst(s)}`; break; }
+        }
+        line ??= sentenceWith(thirdPerson(p.description), base);
+        if (!line && !inStack) continue;
+        const where = p.category === "Personal" ? "personal project" : p.category;
+        line ??= `Part of the tech stack. ${thirdPerson(p.description).split(/(?<=[.!?])\s+/)[0]}`;
+        bullets.push(`• ${p.title} (${where}): ${line}`);
+        if (bullets.length === 4) break;
+    }
+    if (bullets.length === 0) return null;
+    const rating = tech.rating !== undefined ? ` and rates himself ${tech.rating}/100 in it` : "";
+    return `Sharath works with ${tech.name}${rating}. Here is where he has used it:\n${bullets.join("\n")}`;
+}
+
 function skillAnswer(question: string): Reply | null {
     if (!SKILL_CUE.test(question)) return null;
     const q = ` ${norm(question)} `;
@@ -67,6 +107,11 @@ function skillAnswer(question: string): Reply | null {
         return n.length > 1 && q.includes(` ${n} `);
     });
     if (mentioned.length === 0 || mentioned.length > 4) return null;
+
+    if (mentioned.length === 1 && DETAIL_CUE.test(question)) {
+        const detail = techDetail(mentioned[0]);
+        if (detail) return { answer: detail, sources: [`skill-${norm(mentioned[0].name)}`], kind: "answer" };
+    }
 
     const lines = mentioned.map((t) => {
         const rating = t.rating !== undefined ? ` He rates himself ${t.rating}/100 in it.` : "";
@@ -87,10 +132,15 @@ export function isOffTopic(question: string): boolean {
     return OFF_TOPIC.test(question);
 }
 
-export function answerFromFacts(question: string, hits: Hit[] = retrieve(question)): Reply {
-    const q = question.trim();
-    if (GREETING.test(q) || THANKS.test(q)) return { answer: GREETING_REPLY, sources: [], kind: "greeting" };
+export function answerFromFacts(question: string, hits?: Hit[]): Reply {
+    const raw = question.trim();
+    if (GREETING.test(raw) || THANKS.test(raw)) return { answer: GREETING_REPLY, sources: [], kind: "greeting" };
+    if (isOffTopic(raw)) return { answer: OFF_TOPIC_REPLY, sources: [], kind: "off-topic" };
+
+    // fix typos ("pyhon", "salry") before matching; the checks above ran on the raw text on purpose
+    const q = correctQuery(raw);
     if (isOffTopic(q)) return { answer: OFF_TOPIC_REPLY, sources: [], kind: "off-topic" };
+    hits ??= retrieve(q);
 
     const skill = skillAnswer(q);
     if (skill) return skill;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { answerFromFacts, isOffTopic } from "@/lib/chat/fallback";
 import { parseChatBody, rateLimit } from "@/lib/chat/guard";
-import { MIN_SCORE, retrieve } from "@/lib/chat/retrieve";
+import { correctQuery, MIN_SCORE, retrieve } from "@/lib/chat/retrieve";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -101,18 +101,22 @@ export async function POST(req: Request) {
     if (!parsed) return NextResponse.json({ error: "Please send a question." }, { status: 400 });
 
     const { question, history } = parsed;
-    const hits = retrieve(question);
+    const fixed = correctQuery(question);
+    const hits = retrieve(fixed);
     const factsReply = answerFromFacts(question, hits);
 
     // Greetings, refusals and "I don't have that" never need the model.
-    const modelWorthCalling = factsReply.kind === "answer" && !isOffTopic(question) && hits[0]?.score >= MIN_SCORE;
+    // Skill answers are built from exact data (rating + projects), so the model can only make them worse.
+    const deterministic = factsReply.sources.length > 0 && factsReply.sources.every((id) => id.startsWith("skill-"));
+    const modelWorthCalling =
+        factsReply.kind === "answer" && !deterministic && !isOffTopic(question) && hits[0]?.score >= MIN_SCORE;
     if (!modelWorthCalling) {
         return NextResponse.json({ answer: factsReply.answer, source: "facts", modelStatus: await modelStatus() });
     }
 
     const status = await modelStatus();
     if (status === "ready") {
-        const result = await askModel(question, history, hits.map((h) => h.chunk.text));
+        const result = await askModel(fixed, history, hits.map((h) => h.chunk.text));
         if (result.kind === "answer") return NextResponse.json({ answer: result.answer, source: "model", modelStatus: "ready" });
         if (result.kind === "unreachable") {
             lastStatus = { value: "waking", at: Date.now() };

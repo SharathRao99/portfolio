@@ -82,3 +82,47 @@ export function retrieve(query: string, limit = 4): Hit[] {
 
 /** Below this the question is treated as "not covered by my facts". */
 export const MIN_SCORE = 2.2;
+
+// ---------------------------------------------------------------- typo tolerance
+// Recruiters type fast: "pyhon", "salry", "notise". Words that are not in our own
+// vocabulary are snapped to the closest vocabulary word (one edit, two for long words).
+
+const VOCAB = new Map<string, number>(); // word -> number of chunks containing it
+for (const chunk of allChunks) {
+    const words = new Set(`${chunk.topic} ${chunk.keywords} ${chunk.text}`.toLowerCase().match(/[a-z0-9+#]{5,}/g) ?? []);
+    for (const w of words) VOCAB.set(w, (VOCAB.get(w) ?? 0) + 1);
+}
+const VOCAB_WORDS = [...VOCAB.keys()];
+
+/** Optimal-string-alignment distance (insert, delete, substitute, swap), capped. */
+function editDistance(a: string, b: string, cap: number): number {
+    if (Math.abs(a.length - b.length) > cap) return cap + 1;
+    const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+    for (let j = 0; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+            if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+        }
+    }
+    return d[a.length][b.length];
+}
+
+export function correctQuery(query: string): string {
+    return query.replace(/[A-Za-z0-9+#]{5,}/g, (word) => {
+        const w = word.toLowerCase();
+        if (VOCAB.has(w) || STOPWORDS.has(w) || /^\d+$/.test(w)) return word;
+        const cap = w.length >= 9 ? 2 : 1;
+        let best: string | null = null;
+        let bestDist = cap + 1;
+        for (const candidate of VOCAB_WORDS) {
+            const dist = editDistance(w, candidate, cap);
+            if (dist < bestDist || (dist === bestDist && best !== null && (VOCAB.get(candidate) ?? 0) > (VOCAB.get(best) ?? 0))) {
+                best = candidate;
+                bestDist = dist;
+            }
+        }
+        return best && bestDist <= cap ? best : word;
+    });
+}
