@@ -33,6 +33,7 @@ export const recruiterFacts = {
     relocation:
         "Sharath is based in Bengaluru and is only open to relocating within Bengaluru, so on-site or hybrid roles need to be in Bengaluru. Fully remote roles work too.",
     contact: `The best way to reach Sharath is by email at ${personalInfo.email}. His resume can be downloaded with the "Download Resume" button in the site header.`,
+    links: "Sharath's LinkedIn is https://www.linkedin.com/in/sharath-b-c-45ba01203 and his GitHub is https://github.com/SharathRao99.",
 } as const;
 
 const list = (items: string[]) => items.join("; ");
@@ -83,8 +84,14 @@ function buildChunks(): Chunk[] {
         {
             id: "contact",
             topic: "Contact and resume",
-            keywords: "contact email mail reach phone number call resume cv download hire interview schedule talk linkedin github",
+            keywords: "contact email mail reach phone number call resume cv download hire interview schedule talk",
             text: recruiterFacts.contact,
+        },
+        {
+            id: "links",
+            topic: "LinkedIn and GitHub",
+            keywords: "linkedin github profile profiles link links url social network repositories repos code open source portfolio",
+            text: recruiterFacts.links,
         }
     );
 

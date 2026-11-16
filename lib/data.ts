@@ -367,7 +367,7 @@ export const education: TimelineEntry[] = [
         org: "Bangalore University",
         location: "Bangalore",
         period: "2020 — 2022",
-        description: "Completed Master of Computer Applications with First Class Examplary (8.02 CGPA)",
+        description: "Completed Master of Computer Applications with First Class with Distinction (8.02 CGPA)",
         logoPath: "/institutes/bengaluru-university.png",
         logoOnLight: true,
     },
