@@ -120,6 +120,34 @@ function buildChunks(): Chunk[] {
             text: `${job.title} at ${job.org} (${job.location}), ${job.period}. ${thirdPerson(job.description)}`,
         });
     }
+    // counts and lists, so "how many companies?" / "list his employers" are answered directly
+    const NUMBER_WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+    const word = (n: number) => NUMBER_WORDS[n] ?? String(n);
+    const span = (period: string) => period.replace(/\s*—\s*/, " to ").replace(/present/i, "present");
+    chunks.push({
+        id: "work-history",
+        topic: "Work history and companies",
+        keywords:
+            "how many companies employers organisations organizations jobs worked work history career timeline list previous past current employment experience",
+        text:
+            `Sharath has worked at ${word(workExperience.length)} ${workExperience.length === 1 ? "company" : "companies"}: ` +
+            workExperience.map((j) => `${j.org} (${j.title}, ${span(j.period)})`).join(" and ") +
+            ".",
+    });
+    const byCategory = new Map<string, string[]>();
+    for (const p of projectsPageData) byCategory.set(p.category, [...(byCategory.get(p.category) ?? []), p.title]);
+    chunks.push({
+        id: "projects-overview",
+        topic: "Projects overview",
+        keywords: "how many projects list all major portfolio built worked on products work done",
+        text:
+            `Sharath's portfolio lists ${projectsPageData.length} projects. ` +
+            [...byCategory.entries()]
+                .map(([cat, titles]) => `${cat === "Personal" ? "Personal projects" : `At ${cat}`}: ${titles.join(", ")}`)
+                .join(". ") +
+            ".",
+    });
+
     const current = workExperience.find((j) => /present/i.test(j.period));
     if (current) {
         chunks.push({
