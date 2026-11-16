@@ -124,6 +124,9 @@ export default function ChatWidget() {
                     <motion.div
                         role="dialog"
                         aria-label="Chat with Sharath's assistant"
+                        // Lenis (SmoothScroll.tsx) captures every wheel event on the page, which scrolled the
+                        // page behind the panel and left the message list stuck. This opts the panel out.
+                        data-lenis-prevent
                         initial={{ opacity: 0, y: 16, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 16, scale: 0.96 }}
