@@ -61,7 +61,7 @@ function buildChunks(): Chunk[] {
         {
             id: "salary",
             topic: "Salary expectation",
-            keywords: "salary ctc compensation pay package expected expectation lpa lakhs money remuneration offer budget",
+            keywords: "salary ctc compensation pay package expected expectation lpa lakhs money remuneration offer budget want wants per year annual annum earn earning expecting expect asking",
             text: recruiterFacts.salary,
         },
         {
@@ -73,7 +73,7 @@ function buildChunks(): Chunk[] {
         {
             id: "notice",
             topic: "Notice period",
-            keywords: "notice period join joining start available availability when how soon immediate resign serve",
+            keywords: "notice period join joining start available availability when how soon immediate immediately resign serve days day weeks week months early earlier next",
             text: recruiterFacts.notice,
         },
         {
@@ -85,7 +85,7 @@ function buildChunks(): Chunk[] {
         {
             id: "relocation",
             topic: "Relocation",
-            keywords: "relocate relocation relocating move shift travel outside open willing other cities abroad bengaluru bangalore",
+            keywords: "relocate relocation relocating move shift travel outside open willing other cities abroad office interested hyderabad mumbai pune chennai delhi gurgaon gurugram noida kolkata ahmedabad kochi mysuru mysore coimbatore jaipur chandigarh indore us usa uk dubai singapore germany canada overseas country bengaluru bangalore",
             text: recruiterFacts.relocation,
         },
         {
@@ -153,10 +153,23 @@ function buildChunks(): Chunk[] {
         chunks.push({
             id: "current-role",
             topic: "Current role",
-            keywords: "current currently now present role job company working employer",
+            keywords: "current currently now present role job company working employer since started",
             text: `Sharath currently works as a ${current.title} at ${current.org} in ${current.location}, since ${current.period.split("—")[0].trim()}.`,
         });
     }
+
+    // ---- skills overview (tech stack / strengths) ----
+    chunks.push({
+        id: "skills-overview",
+        topic: "Tech stack overview",
+        keywords: "tech stack technologies technology main skills strengths strong best specialise specialize expertise what does he know languages frameworks tools overview",
+        text:
+            "Sharath's main technologies: " +
+            skillsPageData
+                .map((g) => `${g.title}: ${g.skillSets.slice(0, 6).map((s) => s.name).join(", ")}`)
+                .join(". ") +
+            ".",
+    });
 
     // ---- projects ----
     for (const p of projectsPageData) {

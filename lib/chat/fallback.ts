@@ -1,5 +1,5 @@
 import { recruiterFacts, thirdPerson } from "@/lib/chat/knowledge";
-import { correctQuery, MIN_SCORE, retrieve, type Hit } from "@/lib/chat/retrieve";
+import { correctQuery, MIN_SCORE, retrieve, tokenize, type Hit } from "@/lib/chat/retrieve";
 import { personalInfo, projectsPageData, skillsPageData } from "@/lib/data";
 
 /**
@@ -22,9 +22,31 @@ const GREETING_REPLY =
 const GREETING = /^\s*(hi|hello|hey|hii+|good (morning|afternoon|evening)|namaste|yo|sup)\b[\s!.?]*$/i;
 const THANKS = /^\s*(thanks|thank you|thx|ok(ay)?|cool|great|got it)\b[\s!.?]*$/i;
 
-// obvious attempts to use the bot as a general assistant or to override it
+// instructions hidden in a question that try to change the bot's behaviour
+const INJECTION =
+    /\b(ignore (all |any |the |your |these )?(previous |prior |above |earlier )?(instructions|rules|prompt|guidelines|facts)|ignore (all |any |the )?(previous|prior|above|earlier)|disregard|forget (everything|all|your|the)|system prompt|your (system )?(instructions|prompt|rules)|jailbreak|pretend (to be|you)|act as|you are now|from now on|reveal (your|the) (prompt|instructions)|print your|repeat the text above)\b/i;
+
+// requests that are plainly not about Sharath
 const OFF_TOPIC =
-    /\b(ignore (all |any |the )?(previous|prior|above)|system prompt|your instructions|jailbreak|pretend (to be|you)|act as|you are now|write (me )?(a |an )?(poem|story|essay|song|joke|code|script|function|email to)|tell me a joke|weather|stock price|bitcoin|recipe|capital of|translate|solve|homework|who (is|was) the (president|prime minister)|what is \d+\s*[+\-*/x]\s*\d+)\b/i;
+    /\b(write (me )?(a |an |some |the )?([\w+#.-]+ ){0,2}(poem|story|essay|song|joke|code|script|function|program|query|email|letter|haiku|limerick)|tell me a joke|weather|stock price|bitcoin|recipe|capital of|translate|solve|homework|who (is|was) the (president|prime minister)|prime minister of|president of)\b/i;
+const MATH = /\b(what('?s| is)|calculate|compute)\s+-?\d+(\.\d+)?\s*(\+|-|\*|x|\u00d7|times|plus|minus|multiplied by|divided by|\/)\s*-?\d+/i;
+
+// things only Sharath knows and we were never given: answer "I don't have that" instead of guessing from nearby text
+const KNOWN_UNKNOWN =
+    /\b(how old|his age|date of birth|dob|birthday|where was he born|married|marital|wife|girlfriend|kids|children|(home|residential|postal|permanent) address|references?|referees?|(other|competing|any) offers?|offers? in hand|bonus|religio\w*|caste|passport|hobb(y|ies)|weakness(es)?|favou?rite|blood group|father|mother|political|why (did|is|was|does|would) he (leave|leaving|left|looking|want to (leave|change))|reason (for|of) (leaving|change|switch)|job change|visa|work authori[sz]ation)\b/i;
+
+// "current / last drawn salary" is not the same as the expected salary we do have
+const CURRENT_SALARY =
+    /\b(current|present|existing|last[- ]drawn|drawn|take[- ]home)\b[^?.!]*\b(ctc|salary|pay|package|compensation|income)\b|\b(ctc|salary|pay|package|compensation)\b[^?.!]*\b(current|present|last[- ]drawn|drawn)\b|\bhike\b/i;
+
+/** Drops sentences that try to override the bot ("Ignore previous instructions and ..."), keeps the real question. */
+export function stripInjection(text: string): string {
+    return text
+        .split(/(?<=[.!?;])\s+|\s+(?:also|and then)\s+|,\s*(?=(?:and\s+)?(?:ignore|disregard|forget|pretend|act as|you are now|from now on))/i)
+        .filter((part) => part.trim() && !INJECTION.test(part))
+        .join(" ")
+        .trim();
+}
 
 // ---- direct "do you know X?" answers --------------------------------------
 
@@ -126,24 +148,67 @@ export type Reply = {
     /** ids of the chunks the answer was built from, for debugging and tests */
     sources: string[];
     kind: "answer" | "unknown" | "off-topic" | "greeting";
+    /** the facts this answer was built from; the API route gives these to the model as its only context */
+    hits?: Hit[];
 };
 
 export function isOffTopic(question: string): boolean {
-    return OFF_TOPIC.test(question);
+    return INJECTION.test(question) || OFF_TOPIC.test(question) || MATH.test(question);
+}
+
+const INTRO = /^(who (is|'s) (sharath|he|this)|introduce (him|sharath)|describe (him|sharath))\b/i;
+
+/** Splits "salary and when can he join" into parts and answers each when they hit different facts. */
+function multiPartAnswer(q: string): Reply | null {
+    const parts = q
+        .split(/\s*(?:\band\b|&|,|;|\balso\b|\bplus\b|\?)\s*/i)
+        .map((x) => x.trim())
+        .filter((x) => tokenize(x).length >= 1); // short parts like "when he can join" are still a question; the score threshold below guards against noise
+    if (parts.length < 2 || parts.length > 3) return null;
+    const picks = new Map<string, Hit>();
+    for (const part of parts) {
+        const hit = retrieve(part, 1)[0];
+        if (hit && hit.score >= MIN_SCORE * 1.3) picks.set(hit.chunk.id, hit);
+    }
+    if (picks.size < 2) return null;
+    const hits = [...picks.values()];
+    return { answer: hits.map((h) => h.chunk.text).join("\n\n"), sources: hits.map((h) => h.chunk.id), kind: "answer", hits };
 }
 
 export function answerFromFacts(question: string, hits?: Hit[]): Reply {
-    const raw = question.trim();
-    if (GREETING.test(raw) || THANKS.test(raw)) return { answer: GREETING_REPLY, sources: [], kind: "greeting" };
-    if (isOffTopic(raw)) return { answer: OFF_TOPIC_REPLY, sources: [], kind: "off-topic" };
+    const asked = question.trim();
+    if (GREETING.test(asked) || THANKS.test(asked)) return { answer: GREETING_REPLY, sources: [], kind: "greeting" };
+
+    // keep the real question, drop any "ignore your instructions ..." part; nothing left means it was only an attack
+    const raw = stripInjection(asked);
+    if (!raw || isOffTopic(raw)) return { answer: OFF_TOPIC_REPLY, sources: [], kind: "off-topic" };
+
+    if (CURRENT_SALARY.test(raw)) {
+        return {
+            answer: `I don't have his current salary. ${recruiterFacts.salary} For anything else, email Sharath at ${personalInfo.email}.`,
+            sources: ["salary"],
+            kind: "unknown",
+        };
+    }
+    if (KNOWN_UNKNOWN.test(raw)) return { answer: UNKNOWN_REPLY, sources: [], kind: "unknown" };
 
     // fix typos ("pyhon", "salry") before matching; the checks above ran on the raw text on purpose
-    const q = correctQuery(raw);
+    let q = correctQuery(raw);
     if (isOffTopic(q)) return { answer: OFF_TOPIC_REPLY, sources: [], kind: "off-topic" };
+    if (INTRO.test(q)) q = "summary overview profile background about";
+    // "when did he join Zibtek?" is about his dates there, not his notice period ("when can he join?")
+    const company = q.match(/\b(zibtek|raw ?conscious)\b/i)?.[1];
+    if (company && /\b(when|since when|which (month|year)|what (date|month|year))\b[^?]*\b(join(ed)?|start(ed)?|began|begin)\b/i.test(q)) {
+        q = `${company} work role period dates`;
+    }
     hits ??= retrieve(q);
 
     const skill = skillAnswer(q);
-    if (skill) return skill;
+    if (skill) return { ...skill, hits };
+
+    // "salary and when can he join" -> answer both
+    const multi = multiPartAnswer(q);
+    if (multi) return multi;
 
     const top = hits[0];
     if (!top || top.score < MIN_SCORE) return { answer: UNKNOWN_REPLY, sources: [], kind: "unknown" };
@@ -155,7 +220,7 @@ export function answerFromFacts(question: string, hits?: Hit[]): Reply {
 
     let answer = picked.map((h) => h.chunk.text).join("\n\n");
     if (answer.length > 900) answer = answer.slice(0, 880).replace(/\s+\S*$/, "") + "…";
-    return { answer, sources: picked.map((h) => h.chunk.id), kind: "answer" };
+    return { answer, sources: picked.map((h) => h.chunk.id), kind: "answer", hits };
 }
 
 export { recruiterFacts };

@@ -110,6 +110,8 @@ function editDistance(a: string, b: string, cap: number): number {
 }
 
 export function correctQuery(query: string): string {
+    // "reactjs" / "node js" / "nextjs" -> "react.js" ... so they match the technology names
+    query = query.replace(/\b(react|node|next|express|vue)\.?\s*js\b/gi, "$1.js");
     return query.replace(/[A-Za-z0-9+#]{5,}/g, (word) => {
         const w = word.toLowerCase();
         if (VOCAB.has(w) || STOPWORDS.has(w) || /^\d+$/.test(w)) return word;

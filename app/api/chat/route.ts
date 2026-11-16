@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { after, NextResponse } from "next/server";
-import { answerFromFacts, isOffTopic } from "@/lib/chat/fallback";
+import { answerFromFacts, isOffTopic, stripInjection } from "@/lib/chat/fallback";
 import { parseChatBody, rateLimit } from "@/lib/chat/guard";
 import { logChat, loggingEnabled } from "@/lib/chat/log";
-import { correctQuery, MIN_SCORE, retrieve } from "@/lib/chat/retrieve";
+import { correctQuery, MIN_SCORE } from "@/lib/chat/retrieve";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -104,9 +104,10 @@ export async function POST(req: Request) {
 
     const { question, history, sid } = parsed;
     const started = Date.now();
-    const fixed = correctQuery(question);
-    const hits = retrieve(fixed);
-    const factsReply = answerFromFacts(question, hits);
+    // the model only ever sees the real question: injected "ignore your rules" text is stripped, typos fixed
+    const fixed = correctQuery(stripInjection(question) || question);
+    const factsReply = answerFromFacts(question);
+    const hits = factsReply.hits ?? [];
 
     // One place that answers AND records, so every answered question is logged (after the response is sent).
     const finish = (answer: string, source: "model" | "facts", modelStatus: ModelStatus, note?: string) => {
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
     // Skill answers are built from exact data (rating + projects), so the model can only make them worse.
     const deterministic = factsReply.sources.length > 0 && factsReply.sources.every((id) => id.startsWith("skill-"));
     const modelWorthCalling =
-        factsReply.kind === "answer" && !deterministic && !isOffTopic(question) && hits[0]?.score >= MIN_SCORE;
+        factsReply.kind === "answer" && !deterministic && !isOffTopic(stripInjection(question)) && (hits[0]?.score ?? 0) >= MIN_SCORE;
     if (!modelWorthCalling) {
         return finish(factsReply.answer, "facts", await modelStatus());
     }
