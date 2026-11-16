@@ -127,7 +127,7 @@ export const skillsPageData = [
         skillSets: [
             { name: "AWS", image: '/icons/aws.png', rating: 70 },
             { name: "Firebase", image: '/icons/firebase.png', rating: 75 },
-            { name: "Digital Occean", image: '/icons/digital-occean.png', rating: 70 },
+            { name: "DigitalOcean", image: '/icons/digital-occean.png', rating: 70 },
         ]
     },
     {

@@ -58,6 +58,9 @@ for (const d of index) for (const term of d.termFreq.keys()) docFreq.set(term, (
 export interface Hit {
     chunk: Chunk;
     score: number;
+    /** how many distinct query words this chunk matched, out of `total`; low coverage = a weak, accidental match */
+    matched: number;
+    total: number;
 }
 
 export function retrieve(query: string, limit = 4): Hit[] {
@@ -68,14 +71,16 @@ export function retrieve(query: string, limit = 4): Hit[] {
     const hits: Hit[] = [];
     for (const doc of index) {
         let score = 0;
+        let matched = 0;
         for (const term of terms) {
             const tf = doc.termFreq.get(term);
             if (!tf) continue;
+            matched++;
             const df = docFreq.get(term) ?? 0;
             const idf = Math.log(1 + (n - df + 0.5) / (df + 0.5));
             score += idf * ((tf * (K1 + 1)) / (tf + K1 * (1 - B + (B * doc.length) / avgLength)));
         }
-        if (score > 0) hits.push({ chunk: doc.chunk, score });
+        if (score > 0) hits.push({ chunk: doc.chunk, score, matched, total: terms.length });
     }
     return hits.sort((a, b) => b.score - a.score).slice(0, limit);
 }
@@ -109,12 +114,27 @@ function editDistance(a: string, b: string, cap: number): number {
     return d[a.length][b.length];
 }
 
+/** Recruiter shorthand -> plain words, so "ECTC?" and "NP?" are understood. */
+export function expandAbbreviations(text: string): string {
+    return text
+        .replace(/\b(c|current)[- ]?ctc\b|\bcctc\b/gi, "current ctc")
+        .replace(/\b(e|expected)[- ]?ctc\b|\bectc\b/gi, "expected ctc")
+        .replace(/\bnp\b/gi, "notice period")
+        .replace(/\byoe\b/gi, "years of experience")
+        .replace(/\blwd\b/gi, "last working day")
+        .replace(/\b(total|relevant|overall)\s+exp\b/gi, "$1 experience")
+        .replace(/\bexp\b/gi, "experience");
+}
+
+// ordinary words that sit one edit away from a vocabulary word ("total" vs "totals"); never "correct" these
+const KEEP = new Set(["total", "other", "could", "would", "should", "where", "there", "their", "these", "those", "about", "which", "while", "still", "since", "until", "being", "doing", "years", "first", "great", "heard", "means"]);
+
 export function correctQuery(query: string): string {
     // "reactjs" / "node js" / "nextjs" -> "react.js" ... so they match the technology names
     query = query.replace(/\b(react|node|next|express|vue)\.?\s*js\b/gi, "$1.js");
     return query.replace(/[A-Za-z0-9+#]{5,}/g, (word) => {
         const w = word.toLowerCase();
-        if (VOCAB.has(w) || STOPWORDS.has(w) || /^\d+$/.test(w)) return word;
+        if (VOCAB.has(w) || STOPWORDS.has(w) || KEEP.has(w) || /^\d+$/.test(w)) return word;
         const cap = w.length >= 9 ? 2 : 1;
         let best: string | null = null;
         let bestDist = cap + 1;

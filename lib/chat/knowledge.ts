@@ -97,7 +97,7 @@ function buildChunks(): Chunk[] {
         {
             id: "links",
             topic: "LinkedIn and GitHub",
-            keywords: "linkedin github profile profiles link links url social network repositories repos code open source portfolio",
+            keywords: "linkedin github profile profiles link links url social network repositories repos code open source portfolio website see view work samples where",
             text: recruiterFacts.links,
         }
     );
@@ -171,6 +171,93 @@ function buildChunks(): Chunk[] {
             ".",
     });
 
+    // ---- role fit, frontend/backend, strengths: answers to "is he a good fit for ...?" and "strongest skill?" ----
+    const names = (wanted: string[]) =>
+        wanted.filter((n) => skillsPageData.some((g) => g.skillSets.some((s) => s.name === n)));
+    const frontend = names(["React", "Next.js", "TypeScript", "JavaScript", "Tailwind", "HTML5", "CSS3", "Zustand", "Redux", "TanStack Query", "React Hook Form", "Zod"]);
+    const backend = names(["Node.js", "Express.js", "FastAPI", "PHP", "MongoDB", "MySQL", "SQL"]);
+    chunks.push(
+        {
+            id: "skills-frontend",
+            topic: "Frontend skills",
+            keywords: "frontend front-end front end ui ux client side web skills technologies",
+            text: `Frontend: ${frontend.join(", ")}.`,
+        },
+        {
+            id: "skills-backend",
+            topic: "Backend skills",
+            keywords: "backend back-end back end server side api apis rest restful endpoints services skills technologies",
+            // "REST APIs" comes from Sharath's resume (Backend skills); the site's skills page has no rating for it
+            text: `Backend: ${backend.join(", ")}. He builds REST APIs, for example with Node.js and Express.js or Python and FastAPI.`,
+        },
+        {
+            id: "role-fit",
+            topic: "Role fit: full-stack, frontend or backend",
+            keywords: "good fit suitable role position work as backend frontend full stack fullstack developer engineer can he work hire hiring job opening",
+            text: `Sharath is a Full-Stack Developer, so he can work on the frontend or the backend. Frontend: ${frontend.slice(0, 5).join(", ")}. Backend: ${backend.slice(0, 5).join(", ")}.`,
+        }
+    );
+    const maxRating = Math.max(...skillsPageData.flatMap((g) => g.skillSets.map((s) => s.rating)));
+    const strongest = [...new Set(skillsPageData.flatMap((g) => g.skillSets.filter((s) => s.rating === maxRating).map((s) => s.name)))];
+    chunks.push({
+        id: "top-skills",
+        topic: "Strongest skills",
+        keywords: "strongest best top highest strength strengths most expert good at best at proficient skills main core",
+        text: `Sharath's highest self-rated skills (${maxRating}/100) are ${strongest.join(", ")}.`,
+    });
+
+    // ---- leadership, status, achievements ----
+    chunks.push({
+        id: "leadership",
+        topic: "Leadership and ownership",
+        keywords: "lead leader led leadership team manage managed management mentor mentoring ownership owned responsible head senior",
+        // each clause is stated in lib/data.ts (Recruitree description, SequiDocs3 note, Preach Together description)
+        text: "Sharath has taken lead roles: he led the development of Recruitree at Raw Conscious, was the frontend lead on SequiDocs3, and took ownership of the live Preach Together & Ask Heaven platform at Zibtek. His portfolio does not mention formally managing a team.",
+    });
+    if (current) {
+        chunks.push({
+            id: "employed",
+            topic: "Employment status",
+            keywords: "currently employed employment status working job unemployed notice serving",
+            text: `Yes, Sharath is currently employed as a ${current.title} at ${current.org}, since ${current.period.split("—")[0].trim()}.`,
+        });
+    }
+    chunks.push({
+        id: "availability",
+        topic: "Open to opportunities",
+        keywords: "open opportunities opportunity job change switch available hiring interested hire new role",
+        // "open to opportunities" is the status badge on Sharath's own home page
+        text: `Sharath is open to new opportunities. His notice period is 1 month (negotiable), and he is open to remote roles or hybrid/on-site roles in Bengaluru.`,
+    });
+    const award = workExperience.map((j) => j.description.match(/Recognized with an? ([^.]+)/i)?.[1]).find(Boolean);
+    const measurable = projectsPageData
+        .flatMap((p) => p.keyContributions.map((c) => ({ p: p.title, c })))
+        .filter(({ c }) => /\d+(\.\d+)?s\b|\d+%|\d+ (API test|tests|Playwright)/.test(c))
+        .slice(0, 3)
+        .map(({ p, c }) => `${p}: ${thirdPerson(c).slice(0, 170).replace(/\s+\S*$/, "")}`);
+    chunks.push({
+        id: "achievements",
+        topic: "Achievements and awards",
+        keywords: "achievement achievements award awards recognition recognised recognized proud biggest accomplishment accomplishments highlight highlights impact results won performance improve improved optimise optimize optimization speed faster lcp lighthouse",
+        text: `${award ? `Sharath was recognized with a ${award} at Zibtek. ` : ""}Highlights from his projects: ${measurable.join("; ")}.`,
+    });
+
+    // ---- projects grouped by where they were done ----
+    for (const [cat, label, kw] of [
+        ["Zibtek", "At Zibtek", "zibtek client projects"],
+        ["Raw Conscious", "At Raw Conscious", "raw conscious rawconscious earlier previous company projects"],
+        ["Personal", "Personal projects", "personal side own hobby projects"],
+    ] as const) {
+        const list = projectsPageData.filter((p) => p.category === cat);
+        if (!list.length) continue;
+        chunks.push({
+            id: `projects-${cat.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+            topic: `${label}: projects`,
+            keywords: `${kw} projects worked built list`,
+            text: `${label}, Sharath worked on: ` + list.map((p) => `${p.title} (${thirdPerson(p.description).split(/(?<=[.!?])\s+/)[0].slice(0, 130).replace(/\s+\S*$/, "")})`).join("; ") + ".",
+        });
+    }
+
     // ---- projects ----
     for (const p of projectsPageData) {
         const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -197,7 +284,7 @@ function buildChunks(): Chunk[] {
         chunks.push({
             id: `skills-${group.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
             topic: `Skills: ${group.title}`,
-            keywords: `skill skills know knowledge proficient proficiency experience expertise stack tech technology ${group.title} ${group.skillSets
+            keywords: `skill skills know knowledge proficient proficiency experience expertise stack tech technology ${group.title} ${group.title === "AI & Integrations" ? "llm llms gpt chatgpt generative genai language model ai" : ""} ${group.skillSets
                 .map((s) => s.name)
                 .join(" ")}`,
             text: `${group.title}: ${names}. Ratings are Sharath's own self-assessment out of 100.`,
