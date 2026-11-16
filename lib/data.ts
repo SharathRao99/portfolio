@@ -1,3 +1,5 @@
+import type { TimelineEntry } from "@/components/about/Timeline";
+
 export const personalInfo = {
     name: "Sharath B C",
     email: "sharath.byadagodu@outlook.com",
@@ -334,4 +336,48 @@ export const projectsPageData: ProjectData[] = [
             "Responsive and modern design"
         ]
     }
+];
+
+export const workExperience: TimelineEntry[] = [
+    {
+        title: "Full-Stack Developer",
+        org: "Zibtek Custom Software Development Company",
+        location: "Bangalore",
+        period: "Mar 2026 — Present",
+        logoPath: "/companies/zibtek.webp",
+        logoOnLight: true,
+        logoWide: true,
+        description:
+            "I build and maintain client products across React, Next.js, Node.js, Laravel and Python: Preach Together and Ask Heaven (a ZIP-targeted ad platform with an AI chatbot), Zack Academy (a learning and commerce marketplace) and SequiDocs3 (an employee-management and e-signature platform). Recognized with a Raising Star award for performance.",
+    },
+    {
+        title: "Full-Stack Developer",
+        org: "Raw Conscious",
+        location: "Bangalore",
+        period: "Feb 2023 — Feb 2026",
+        description:
+            "I built web and mobile products end to end: an AI-assisted cyber security and compliance SaaS with multi-tenant role-based access, background jobs and scheduled reports, and a parental control mobile app with parent and child apps. I also integrated payment gateways, authentication providers and AI SDKs, and improved performance by about 20% through rendering, image handling and API efficiency.",
+        logoPath: "/companies/raw-conscious.png",
+    },
+];
+
+export const education: TimelineEntry[] = [
+    {
+        title: "MCA",
+        org: "Bangalore University",
+        location: "Bangalore",
+        period: "2020 — 2022",
+        description: "Completed Master of Computer Applications with First Class Examplary (8.02 CGPA)",
+        logoPath: "/institutes/bengaluru-university.png",
+        logoOnLight: true,
+    },
+    {
+        title: "BCA",
+        org: "St. Aloysius College",
+        location: "Mangaluru",
+        period: "2017 — 2020",
+        description: "Completed Bachelor of Computer Applications with First Class (6.56 CGPA)",
+        logoPath: "/institutes/st-aloysius.png",
+        logoOnLight: true,
+    },
 ];
