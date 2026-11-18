@@ -358,6 +358,7 @@ export const workExperience: TimelineEntry[] = [
         description:
             "I built web and mobile products end to end: an AI-assisted cyber security and compliance SaaS with multi-tenant role-based access, background jobs and scheduled reports, and a parental control mobile app with parent and child apps. I also integrated payment gateways, authentication providers and AI SDKs, and improved performance by about 20% through rendering, image handling and API efficiency.",
         logoPath: "/companies/raw-conscious.png",
+        logoOnLight: true,
     },
 ];
 
