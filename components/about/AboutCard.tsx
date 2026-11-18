@@ -22,19 +22,20 @@ export default function AboutCard() {
                     className="max-w-4xl text-4xl font-bold leading-[1.08] tracking-tight md:text-6xl"
                 />
 
-                <div className="mt-12 grid gap-10 md:grid-cols-[1.2fr_1fr]">
+                <div className="mt-12 grid gap-8 md:grid-cols-2 md:gap-14">
                     <RevealText
                         as="p"
                         text={paragraphOne}
                         stagger={0.012}
-                        className="text-lg font-medium leading-relaxed md:text-2xl"
+                        className="text-lg font-medium leading-relaxed md:text-xl"
                     />
                     <motion.p
                         initial={{ opacity: 0, y: 24 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, amount: 0.3 }}
                         transition={{ delay: 0.4, duration: 0.7 }}
-                        className="leading-relaxed text-muted md:pt-2"
+                        // same size as the lead paragraph; hierarchy comes from colour and weight, not a size mismatch
+                        className="text-lg leading-relaxed text-muted md:text-xl"
                     >
                         {paragraphTwo}
                     </motion.p>

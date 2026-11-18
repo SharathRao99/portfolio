@@ -10,6 +10,7 @@ import BackgroundAnimation from "../components/BackgroundAnimation";
 import ScrollProgress from "../components/motion/ScrollProgress";
 import SmoothScroll from "../components/motion/SmoothScroll";
 import BackToTop from "../components/motion/BackToTop";
+import ChatWidget from "../components/chat/ChatWidget";
 import CommandPalette from "../components/CommandPalette";
 import WebMCPTools from "../components/WebMCPTools";
 import { personalInfo } from "../lib/data";
@@ -152,6 +153,7 @@ export default function RootLayout({
           <main id="content" className="flex-1 overflow-x-clip pt-28 md:pt-32">{children}</main>
           <Footer />
           <BackToTop />
+          <ChatWidget />
           <Analytics />
           <SpeedInsights />
         </Providers>
