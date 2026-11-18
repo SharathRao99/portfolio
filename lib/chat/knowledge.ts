@@ -242,6 +242,28 @@ function buildChunks(): Chunk[] {
         text: `${award ? `Sharath was recognized with a ${award} at Zibtek. ` : ""}Highlights from his projects: ${measurable.join("; ")}.`,
     });
 
+    // first sentence of a description, whole if it fits; otherwise cut at a word with an ellipsis (never mid-parenthesis)
+    const blurb = (description: string, max = 170) => {
+        const first = thirdPerson(description).split(/(?<=[.!?])\s+/)[0].replace(/[.]$/, "");
+        if (first.length <= max) return first;
+        return first.slice(0, max).replace(/\s+\S*$/, "").replace(/\([^)]*$/, "").trim() + "…";
+    };
+
+    // ---- mobile development: projects whose stack or description says mobile / React Native ----
+    const mobile = projectsPageData.filter((p) => /react native|mobile/i.test(`${p.stack.join(" ")} ${p.description}`));
+    if (mobile.length) {
+        const rn = skillsPageData.flatMap((g) => g.skillSets).find((s) => /react native/i.test(s.name));
+        chunks.push({
+            id: "mobile",
+            topic: "Mobile development",
+            keywords: "mobile app apps application development android ios phone smartphone react native cross-platform",
+            text:
+                `Sharath has built mobile apps: ` +
+                mobile.map((p) => `${p.title} at ${p.category} (${blurb(p.description, 150)})`).join("; ") +
+                `.${rn ? ` He rates himself ${rn.rating}/100 in ${rn.name}.` : ""} His portfolio does not say which platforms (Android or iOS) the app targeted.`,
+        });
+    }
+
     // ---- projects grouped by where they were done ----
     for (const [cat, label, kw] of [
         ["Zibtek", "At Zibtek", "zibtek client projects"],
@@ -254,7 +276,7 @@ function buildChunks(): Chunk[] {
             id: `projects-${cat.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
             topic: `${label}: projects`,
             keywords: `${kw} projects worked built list`,
-            text: `${label}, Sharath worked on: ` + list.map((p) => `${p.title} (${thirdPerson(p.description).split(/(?<=[.!?])\s+/)[0].slice(0, 130).replace(/\s+\S*$/, "")})`).join("; ") + ".",
+            text: `${label}, Sharath worked on: ` + list.map((p) => `${p.title} (${blurb(p.description)})`).join("; ") + ".",
         });
     }
 

@@ -197,9 +197,14 @@ function skillAnswer(question: string, original: string = question): Reply | nul
     const q = ` ${aliasNorm(question)} `;
     // phrases like "total experience" are matched on what the visitor typed as well as the typo-corrected text
     const cues = `${question} ${original}`;
-    const mentioned = techs.filter((t) => {
+    const found = techs.filter((t) => {
         const n = norm(t.name).replace(/ \d+$/, "");
         return n.length > 1 && q.includes(` ${n} `);
+    });
+    // "React Native" also contains "React": when a longer name matches, drop the shorter one it contains
+    const mentioned = found.filter((t) => {
+        const n = norm(t.name).replace(/ \d+$/, "");
+        return !found.some((o) => o !== t && norm(o.name).replace(/ \d+$/, "").startsWith(`${n} `));
     });
 
     // a technology AND a project in one question: answer about that technology on that project

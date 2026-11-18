@@ -329,6 +329,14 @@ export const questions = [
     ["skill-on-project", "How did he use React in SequiDocs?", A, [["tech stack"]]],
     ["skill-on-project", "Did he use Python in Crewdesk?", A, [["fastapi"]]],
 
+    // ---------------------------------------------------------------- mobile (reported: "he worked on mobile development?")
+    ["mobile", "he worked on mobile development?", A, [["monarch"], ["react native"]]],
+    ["mobile", "Does he do mobile app development?", A, [["mobile apps"]]],
+    ["mobile", "Has he built Android apps?", A, [["react native"], ["does not say"]], ["yes, sharath has built mobile"]],
+    ["mobile", "iOS experience?", A, [["does not say"]]],
+    ["mobile", "Does he know React Native?", A, [["react native"], ["75/100"]], ["works with react. "]],
+    ["mobile", "projects at Raw Conscious", A, [["monarch"]], ["through)"]],
+
     // ---------------------------------------------------------------- conversational
     ["greeting", "hi", "greeting"],
     ["greeting", "Hello", "greeting"],
