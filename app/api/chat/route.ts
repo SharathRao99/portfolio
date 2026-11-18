@@ -7,6 +7,8 @@ import { correctQuery, MIN_SCORE } from "@/lib/chat/retrieve";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// A free CPU model server needs 10-20s to phrase an answer; Vercel's default function limit is 10s.
+export const maxDuration = 30;
 
 /**
  * POST /api/chat  { message, history? }
@@ -21,7 +23,7 @@ export const dynamic = "force-dynamic";
 
 const MODEL_URL = process.env.CHAT_MODEL_URL?.replace(/\/$/, "");
 const MODEL_TOKEN = process.env.CHAT_MODEL_TOKEN;
-const MODEL_TIMEOUT_MS = 9_000;
+const MODEL_TIMEOUT_MS = 25_000;
 const HEALTH_TIMEOUT_MS = 4_000;
 
 type ModelStatus = "ready" | "waking" | "off";
@@ -53,7 +55,7 @@ function isGrounded(answer: string, facts: string): boolean {
     return risky.every((token) => haystack.includes(token.replace(/[.,]$/, "")));
 }
 
-type ModelResult = { kind: "answer"; answer: string } | { kind: "rejected" } | { kind: "unreachable" };
+type ModelResult = { kind: "answer"; answer: string } | { kind: "rejected" } | { kind: "busy" } | { kind: "unreachable" };
 
 async function askModel(question: string, history: unknown, factTexts: string[]): Promise<ModelResult> {
     if (!MODEL_URL) return { kind: "unreachable" };
@@ -65,6 +67,8 @@ async function askModel(question: string, history: unknown, factTexts: string[])
             signal: AbortSignal.timeout(MODEL_TIMEOUT_MS),
             cache: "no-store",
         });
+        // 429 = the model server is awake but busy with other visitors: answer from the facts, but do not say "waking up"
+        if (res.status === 429) return { kind: "busy" };
         if (!res.ok) return { kind: "unreachable" };
         const data = (await res.json()) as { answer?: unknown };
         const answer = typeof data.answer === "string" ? data.answer.trim() : "";
@@ -135,7 +139,7 @@ export async function POST(req: Request) {
             lastStatus = { value: "waking", at: Date.now() };
             return finish(factsReply.answer, "facts", "waking", "model-unreachable");
         }
-        return finish(factsReply.answer, "facts", "ready", "model-rejected");
+        return finish(factsReply.answer, "facts", "ready", result.kind === "busy" ? "model-busy" : "model-rejected");
     }
     return finish(factsReply.answer, "facts", status);
 }
