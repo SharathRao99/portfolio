@@ -26,6 +26,15 @@ const MODEL_TOKEN = process.env.CHAT_MODEL_TOKEN;
 const MODEL_TIMEOUT_MS = 25_000;
 const HEALTH_TIMEOUT_MS = 4_000;
 
+// Cost guard: a CPU model bills by the second. Past this many model calls per hour (per server instance) answers come
+// from the facts instead, so even a leaked token or a flood of visitors cannot run the model flat out all month.
+const MAX_MODEL_CALLS_PER_HOUR = Number(process.env.CHAT_MODEL_MAX_PER_HOUR ?? 120);
+const modelCalls: number[] = [];
+function modelBudgetLeft(now = Date.now()): boolean {
+    while (modelCalls.length && now - modelCalls[0] > 3_600_000) modelCalls.shift();
+    return modelCalls.length < MAX_MODEL_CALLS_PER_HOUR;
+}
+
 type ModelStatus = "ready" | "waking" | "off";
 
 // remember a recent failed health check so we answer instantly instead of
@@ -132,7 +141,11 @@ export async function POST(req: Request) {
     }
 
     const status = await modelStatus();
+    if (status === "ready" && !modelBudgetLeft()) {
+        return finish(factsReply.answer, "facts", status, "model-budget");
+    }
     if (status === "ready") {
+        modelCalls.push(Date.now());
         const result = await askModel(fixed, history, hits.map((h) => h.chunk.text));
         if (result.kind === "answer") return finish(result.answer, "model", "ready");
         if (result.kind === "unreachable") {
