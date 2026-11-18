@@ -29,7 +29,7 @@ export default function Hero() {
                     these elements start at opacity:0, and anything hidden until
                     hydration cannot be an LCP candidate. Same choreography, but it
                     begins at first paint. */}
-                <div className="order-2 flex flex-col items-center gap-7 text-center lg:order-1 lg:items-start lg:text-left">
+                <div className="order-2 flex min-w-0 flex-col items-center gap-7 text-center lg:order-1 lg:items-start lg:text-left">
                     <p className="eyebrow enter-rise" style={enterDelay(0.2)}>
                         {heroData.title}
                     </p>
@@ -67,7 +67,7 @@ export default function Hero() {
                 </div>
 
                 <div
-                    className="enter-pop order-1 w-full px-2 pb-10 pt-4 lg:order-2 lg:px-0 lg:py-0"
+                    className="enter-pop order-1 w-full min-w-0 px-2 pb-16 pt-4 lg:order-2 lg:px-0 lg:py-0"
                     style={enterDelay(0.5)}
                 >
                     <HeroShowcase />
@@ -139,8 +139,8 @@ const CodeLine = memo(function CodeLine({
     caret: boolean;
 }) {
     return (
-        <span className="block whitespace-pre">
-            <span className="mr-4 inline-block w-4 select-none text-right text-muted opacity-50">
+        <span className="block whitespace-pre max-[359px]:whitespace-pre-wrap">
+            <span className="mr-4 hidden w-4 select-none text-right text-muted opacity-50 sm:inline-block">
                 {index + 1}
             </span>
             {done ? COLORED_LINES[index] : text.slice(0, visible)}
@@ -203,7 +203,7 @@ function CodeEditor({ onDone }: { onDone: () => void }) {
     const done = typed >= TOTAL_CHARS;
 
     return (
-        <pre className="overflow-x-auto p-4 font-mono text-[11px] leading-6 sm:p-5 sm:text-[13px] sm:leading-7 md:text-sm">
+        <pre className="overflow-x-auto p-3 font-mono text-[10px] leading-6 min-[400px]:text-[11px] sm:p-5 sm:text-[13px] sm:leading-7 lg:text-[11px] xl:text-[13px]">
             <code>
                 {lines.map((line, i) => (
                     <CodeLine
@@ -254,7 +254,7 @@ function HeroShowcase() {
                     Outer div owns depth, inner owns the float animation (a CSS
                     transform animation would clobber translateZ). */}
                 <div
-                    className="absolute -bottom-10 left-0 w-[75%] md:-left-10"
+                    className="absolute -bottom-16 left-0 w-[75%] md:-bottom-10 md:-left-10"
                     style={{ transform: "translateZ(50px)" }}
                 >
                     <motion.div
