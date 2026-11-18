@@ -151,17 +151,66 @@ function techDetail(tech: Tech): string | null {
     return `Sharath works with ${tech.name}${rating}. Here is where he has used it:\n${bullets.join("\n")}`;
 }
 
+// which project a question is about ("zack", "sequidocs", "preach together", ...)
+const PROJECT_KEYS: [RegExp, string][] = [
+    [/\b(preach together|ask heaven|preach)\b/i, "Preach Together & Ask Heaven"],
+    [/\bzack\b/i, "Zack Academy"],
+    [/\bsequidocs\d*\b/i, "SequiDocs3"],
+    [/\bcrewdesk\b/i, "Crewdesk"],
+    [/\b(media pipeline|ai media)\b/i, "AI Media Pipeline"],
+    [/\b(cyber ?security|compliance)\b/i, "Cyber Security & Compliance SaaS"],
+    [/\b(recruitree|recruitment management)\b/i, "Recruitment Management System"],
+    [/\b(monarch|parental)\b/i, "Monarch AI - Parental Control App"],
+    [/\b(digital commerce|commerce platform)\b/i, "Digital Commerce Platform"],
+];
+
+/** "How did he use Python on Zack Academy?": what he did with that technology on that project, from the project data. */
+function projectTechAnswer(project: (typeof projectsPageData)[number], tech: Tech): Reply {
+    const base = tech.name.replace(/\s+\d+$/, "");
+    const lines: string[] = [];
+    for (const c of project.keyContributions) {
+        const s = sentenceWith(thirdPerson(c), base);
+        if (s) lines.push(`Sharath ${lowerFirst(s)}`);
+        if (lines.length === 2) break;
+    }
+    if (lines.length === 0) {
+        const d = sentenceWith(thirdPerson(project.description), base);
+        if (d) lines.push(d);
+    }
+    const inStack = project.stack.some((s) => norm(s).replace(/ \d+$/, "") === norm(base));
+    // FastAPI is a Python framework, so a FastAPI backend is Python even when "Python" is not tagged
+    const viaFastApi = norm(base) === "python" && project.stack.some((s) => /fastapi/i.test(s));
+    const rating = tech.rating !== undefined ? ` He rates himself ${tech.rating}/100 in ${tech.name} overall.` : "";
+
+    let answer: string;
+    if (lines.length) answer = `On ${project.title}: ${lines.map((l) => l.replace(/[.…]+$/, "") + ".").join(" ")}${rating}`;
+    else if (inStack) answer = `${tech.name} is part of ${project.title}'s tech stack, but I don't have more detail on how he used it there.${rating}`;
+    else if (viaFastApi) answer = `${project.title}'s backend uses FastAPI, which is a Python framework, but I don't have more detail on how he used it there.${rating}`;
+    else {
+        const elsewhere = tech.projects.length ? ` He has used it in ${tech.projects.join(", ")}.` : "";
+        answer = `${tech.name} isn't listed for ${project.title}.${elsewhere}`;
+    }
+    return { answer, sources: [`skill-${norm(tech.name)}`], kind: "answer" };
+}
+
 function skillAnswer(question: string, original: string = question): Reply | null {
     const q = ` ${aliasNorm(question)} `;
     // phrases like "total experience" are matched on what the visitor typed as well as the typo-corrected text
     const cues = `${question} ${original}`;
-    // "what did you do on Zack Academy" is a project question, not a skill one
-    if (projectTitles.some((t) => q.includes(` ${t.split(" ")[0]} `))) return null;
-
     const mentioned = techs.filter((t) => {
         const n = norm(t.name).replace(/ \d+$/, "");
         return n.length > 1 && q.includes(` ${n} `);
     });
+
+    // a technology AND a project in one question: answer about that technology on that project
+    const projectTitle = PROJECT_KEYS.find(([re]) => re.test(question) || re.test(original))?.[1];
+    if (projectTitle && mentioned.length === 1) {
+        const project = projectsPageData.find((p) => p.title === projectTitle);
+        if (project) return projectTechAnswer(project, mentioned[0]);
+    }
+    // "what did you do on Zack Academy" is a project question, not a skill one
+    if (projectTitle || projectTitles.some((t) => q.includes(` ${t.split(" ")[0]} `))) return null;
+
     if (mentioned.length === 0 || mentioned.length > 4) return null;
 
     // a bare technology ("python?", "does he node js?", "react experience") is a skill question even without "know"

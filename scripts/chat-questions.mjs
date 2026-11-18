@@ -320,6 +320,15 @@ export const questions = [
     ["junk", "Python", A, [["python"]]],
     ["junk", "LinkedIn", A, [["linkedin"]]],
 
+    // ---------------------------------------------------------------- a skill AND a project in one question (reported: "how he use python on zack academy")
+    ["skill-on-project", "explain how he use python on zack academy?", A, [["python seo crawler"]]],
+    ["skill-on-project", "How did he use Python on Zack Academy?", A, [["python seo crawler"]]],
+    ["skill-on-project", "How did he use Tiptap in SequiDocs3?", A, [["tiptap"], ["editor"]]],
+    ["skill-on-project", "Did he use Python in Preach Together?", A, [["python ai service"]]],
+    ["skill-on-project", "Does Monarch use Python?", A, [["isn't listed"]]],
+    ["skill-on-project", "How did he use React in SequiDocs?", A, [["tech stack"]]],
+    ["skill-on-project", "Did he use Python in Crewdesk?", A, [["fastapi"]]],
+
     // ---------------------------------------------------------------- conversational
     ["greeting", "hi", "greeting"],
     ["greeting", "Hello", "greeting"],
