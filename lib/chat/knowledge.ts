@@ -116,7 +116,7 @@ function buildChunks(): Chunk[] {
         chunks.push({
             id: `work-${job.org.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
             topic: `Work at ${job.org}`,
-            keywords: `work job company employer role position worked ${ongoing ? "current currently now present" : "previous past earlier former"} experience ${job.org}`,
+            keywords: `work job company employer role position worked do does doing responsibilities responsible duties day-to-day ${ongoing ? "current currently now present" : "previous past earlier former"} experience ${job.org}`,
             text: `${job.title} at ${job.org} (${job.location}), ${job.period}. ${thirdPerson(job.description)}`,
         });
     }
@@ -243,10 +243,12 @@ function buildChunks(): Chunk[] {
     });
 
     // first sentence of a description, whole if it fits; otherwise cut at a word with an ellipsis (never mid-parenthesis)
-    const blurb = (description: string, max = 170) => {
+    const blurb = (description: string, max = 240) => {
         const first = thirdPerson(description).split(/(?<=[.!?])\s+/)[0].replace(/[.]$/, "");
         if (first.length <= max) return first;
-        return first.slice(0, max).replace(/\s+\S*$/, "").replace(/\([^)]*$/, "").trim() + "…";
+        const cut = first.slice(0, max);
+        const comma = cut.lastIndexOf(", ");
+        return (comma > max * 0.5 ? cut.slice(0, comma) : cut.replace(/\s+\S*$/, "")).replace(/\([^)]*$/, "").trim();
     };
 
     // ---- mobile development: projects whose stack or description says mobile / React Native ----

@@ -125,7 +125,7 @@ function sentenceWith(text: string, word: string): string | null {
     const re = new RegExp(`(^|[^A-Za-z0-9])${escapeRe(word)}${notNative}([^A-Za-z0-9]|$)`, "i");
     const hit = text.split(/(?<=[.!?])\s+/).find((s) => re.test(s));
     if (!hit) return null;
-    return hit.length > 240 ? hit.slice(0, 237).replace(/\s+\S*$/, "") + "…" : hit;
+    return hit;
 }
 
 /** Where and how a technology was used, built only from the project data. */
@@ -247,6 +247,31 @@ function skillAnswer(question: string, original: string = question): Reply | nul
     return { answer: lines.join("\n"), sources: mentioned.map((t) => `skill-${norm(t.name)}`), kind: "answer" };
 }
 
+// ---- answer length: never cut mid-sentence -----------------------------------------------
+
+const MAX_ANSWER = 800;
+
+/** Shortens to the last full sentence or list item that fits; never ends with "…" or half a phrase. */
+function trimToBoundary(text: string, max = MAX_ANSWER): string {
+    if (text.length <= max) return text;
+    const cut = text.slice(0, max);
+    const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "), cut.lastIndexOf(".\n"));
+    if (end > max * 0.4) return cut.slice(0, end).replace(/[;,:\s]+$/, "") + ".";
+    return cut.replace(/[,;:]?\s+\S*$/, "") + ".";
+}
+
+/** First fact always; each further fact only if it fits whole (half of a second fact reads as a broken answer). */
+function fitFacts(texts: string[]): string {
+    const out = [texts[0]];
+    let length = texts[0].length;
+    for (const t of texts.slice(1)) {
+        if (length + 2 + t.length > MAX_ANSWER) continue;
+        out.push(t);
+        length += 2 + t.length;
+    }
+    return trimToBoundary(out.join("\n\n"));
+}
+
 export type Reply = {
     answer: string;
     /** ids of the chunks the answer was built from, for debugging and tests */
@@ -283,7 +308,7 @@ function multiPartAnswer(q: string): Reply | null {
     }
     if (picks.size < 2) return null;
     const hits = [...picks.values()];
-    return { answer: hits.map((h) => h.chunk.text).join("\n\n"), sources: hits.map((h) => h.chunk.id), kind: "answer", hits };
+    return { answer: fitFacts(hits.map((h) => h.chunk.text)), sources: hits.map((h) => h.chunk.id), kind: "answer", hits };
 }
 
 export function answerFromFacts(question: string, hits?: Hit[]): Reply {
@@ -310,15 +335,21 @@ export function answerFromFacts(question: string, hits?: Hit[]): Reply {
     // fix typos ("pyhon", "salry") before matching; the checks above ran on the raw text on purpose
     let q = correctQuery(raw);
     if (isOffTopic(q)) return { answer: OFF_TOPIC_REPLY, sources: [], kind: "off-topic" };
+    // "sharath total experience" / "sharath's skills": the name in front must not stop the shortcuts below
+    const bare = q.replace(/^\s*(mr\.?\s+)?sharath(\s+b\s*c)?('s|s)?\s+(?=\S)/i, "");
     if (INTRO.test(q)) q = "summary overview profile background about";
-    else if (BARE_PROJECTS.test(q)) q = "how many projects list all major portfolio built worked on products";
-    else if (BARE_EXPERIENCE.test(q)) q = "summary overview profile background work history";
-    else if (STRONGEST.test(q)) q = "strongest best top highest strength skills";
-    else if (SKILLS_GENERIC.test(q) && !/\b(python|react|node|next|java|mongo|mysql|aws|stripe)\b/i.test(q)) q = "tech stack technologies main skills overview";
+    else if (BARE_PROJECTS.test(bare)) q = "how many projects list all major portfolio built worked on products";
+    else if (BARE_EXPERIENCE.test(bare)) q = "summary overview profile background work history";
+    else if (STRONGEST.test(bare)) q = "strongest best top highest strength skills";
+    else if (SKILLS_GENERIC.test(bare) && !/\b(python|react|node|next|java|mongo|mysql|aws|stripe)\b/i.test(q)) q = "tech stack technologies main skills overview";
     // "when did he join Zibtek?" is about his dates there, not his notice period ("when can he join?")
     const company = q.match(/\b(zibtek|raw ?conscious)\b/i)?.[1];
     if (company && /\b(when|since when|which (month|year)|what (date|month|year))\b[^?]*\b(join(ed)?|start(ed)?|began|begin)\b/i.test(q)) {
         q = `${company} work role period dates`;
+    }
+    // "what does he do at Zibtek?" / "his role at Raw Conscious" is about the role, not the list of projects there
+    else if (company && !/\bprojects?\b/i.test(q) && /\b(what (does|did) he do|his (role|job|position|work)|(role|job|position|responsibilities) (at|in)|work(s|ed|ing)? (at|for))\b/i.test(q)) {
+        q = `${company} work job role position experience employer`;
     }
     hits ??= retrieve(q);
 
@@ -339,8 +370,7 @@ export function answerFromFacts(question: string, hits?: Hit[]): Reply {
     const second = hits[1];
     if (second && second.score >= top.score * 0.75 && second.chunk.topic !== top.chunk.topic) picked.push(second);
 
-    let answer = picked.map((h) => h.chunk.text).join("\n\n");
-    if (answer.length > 900) answer = answer.slice(0, 880).replace(/\s+\S*$/, "") + "…";
+    const answer = fitFacts(picked.map((h) => h.chunk.text));
     return { answer, sources: picked.map((h) => h.chunk.id), kind: "answer", hits };
 }
 

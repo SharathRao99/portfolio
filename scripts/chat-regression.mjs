@@ -55,6 +55,8 @@ function judge([category, q, expect, required = [], forbidden = []], got) {
     }
     for (const p of forbidden) if (low.includes(p.toLowerCase())) problems.push(`contains forbidden "${p}"`);
     if (got.ms > 15000) problems.push(`slow (${got.ms}ms)`);
+    // an answer must never be chopped off mid-sentence
+    if (got.answer.includes("…")) problems.push("answer was cut off (contains …)");
     return problems;
 }
 
