@@ -56,6 +56,39 @@ export default function ChatWidget() {
     const wakeStartedAt = useRef<number | null>(null);
     const [nudge, setNudge] = useState(false);
     const [hasOpened, setHasOpened] = useState(false);
+    // phones: the open chat is a full-screen sheet sized to the VISIBLE area (it shrinks when the keyboard opens)
+    const [sheet, setSheet] = useState<{ top: number; height: number } | null>(null);
+
+    // On Android Chrome the on-screen keyboard shrinks only the visual viewport, so a panel sized from the layout
+    // viewport (100dvh) ends up taller than what is visible and its header and messages slide off the top.
+    // Track the visual viewport instead, and lock the page behind the sheet so it cannot scroll away.
+    useEffect(() => {
+        if (!open || !window.matchMedia("(max-width: 639px)").matches) {
+            setSheet(null);
+            return;
+        }
+        const vv = window.visualViewport;
+        const update = () => setSheet({ top: vv?.offsetTop ?? 0, height: vv?.height ?? window.innerHeight });
+        update();
+        vv?.addEventListener("resize", update);
+        vv?.addEventListener("scroll", update);
+        window.addEventListener("resize", update);
+        const root = document.documentElement;
+        const prev = [root.style.overflow, document.body.style.overflow];
+        root.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+        return () => {
+            vv?.removeEventListener("resize", update);
+            vv?.removeEventListener("scroll", update);
+            window.removeEventListener("resize", update);
+            [root.style.overflow, document.body.style.overflow] = prev;
+        };
+    }, [open]);
+
+    // when the keyboard opens and the sheet shrinks, keep the latest message in view
+    useEffect(() => {
+        if (sheet) listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
+    }, [sheet?.height]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // one friendly nudge per browser session, a few seconds after load; never again once dismissed or used
     useEffect(() => {
@@ -189,7 +222,12 @@ export default function ChatWidget() {
                         transition={{ type: "spring", stiffness: 260, damping: 26 }}
                         // solid background (not glass): page text behind a translucent panel made
                         // answers hard to read. Height leaves room for the fixed header on short phones.
-                        className="fixed bottom-24 left-4 z-[80] flex h-[min(34rem,calc(100dvh-12.5rem))] w-[min(24rem,calc(100vw-2rem))] origin-bottom-left flex-col overflow-hidden rounded-3xl border border-black/10 bg-background shadow-card-float dark:border-white/10"
+                        style={sheet ? { top: sheet.top, height: sheet.height } : undefined}
+                        className={
+                            sheet
+                                ? "fixed inset-x-0 z-[91] flex flex-col overflow-hidden bg-background"
+                                : "fixed bottom-24 left-4 z-[80] flex h-[min(34rem,calc(100dvh-12.5rem))] w-[min(24rem,calc(100vw-2rem))] origin-bottom-left flex-col overflow-hidden rounded-3xl border border-black/10 bg-background shadow-card-float dark:border-white/10"
+                        }
                     >
                         <div className="flex items-center gap-3 border-b border-black/5 px-5 py-4 dark:border-white/5">
                             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-fuchsia-400 text-sm font-black text-white">
@@ -317,7 +355,8 @@ export default function ChatWidget() {
                 )}
             </AnimatePresence>
 
-            <div className="fixed bottom-6 left-4 z-[80] flex flex-col items-start gap-3">
+            {/* on phones the open sheet has its own close button, so the launcher steps aside */}
+            <div className={`fixed bottom-6 left-4 z-[80] flex flex-col items-start gap-3 ${open && sheet ? "hidden" : ""}`}>
                 <AnimatePresence>
                     {nudge && !open && (
                         <motion.div
