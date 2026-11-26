@@ -14,8 +14,8 @@ import ChatWidget from "../components/chat/ChatWidget";
 import CommandPalette from "../components/CommandPalette";
 import WebMCPTools from "../components/WebMCPTools";
 import { personalInfo } from "../lib/data";
+import { SITE_URL } from "@/lib/site";
 
-const SITE_URL = "https://sharath-portfolio.vercel.app";
 
 // woff2 subsets of the same variable fonts (wght 100–900 intact), trimmed to
 // the latin + punctuation/arrow ranges this site actually renders. 132KB of
