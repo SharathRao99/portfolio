@@ -76,15 +76,17 @@ export default function Timeline({ heading, entries }: { heading: string; entrie
                                                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                                                 viewport={{ once: true, amount: 0.5 }}
                                                 transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.2 }}
-                                                className={`h-20 shrink-0 overflow-hidden rounded-2xl p-2 ${
-                                                    entry.logoWide ? "w-44 px-3" : "w-20"
+                                                // every logo gets the SAME tile, so wide wordmarks and square marks line up
+                                                // and the titles start at the same x across entries
+                                                className={`flex h-20 w-36 shrink-0 items-center justify-center overflow-hidden rounded-2xl ${
+                                                    entry.logoWide ? "px-4" : "p-2"
                                                 } ${entry.logoOnLight ? "bg-white" : "glass-light"}`}
                                             >
                                                 {entry.logoPath ? (
                                                     <Image
                                                         src={entry.logoPath}
                                                         alt={entry.org}
-                                                        width={entry.logoWide ? 160 : 80}
+                                                        width={144}
                                                         height={80}
                                                         className="h-full w-full rounded-xl object-contain"
                                                     />
