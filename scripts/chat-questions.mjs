@@ -337,6 +337,14 @@ export const questions = [
     ["mobile", "Does he know React Native?", A, [["react native"], ["75/100"]], ["works with react. "]],
     ["mobile", "projects at Raw Conscious", A, [["monarch"]], ["through)"]],
 
+    // ---------------------------------------------------------------- the name in front (reported: "sharath total experience")
+    ["name-prefix", "sharath total experience", A, [["3+ years"]]],
+    ["name-prefix", "sharath's total experience", A, [["3+ years"]]],
+    ["name-prefix", "sharath experience", A, [["3+ years"]]],
+    ["name-prefix", "sharath projects", A, [["9 projects"]]],
+    ["name-prefix", "sharath skills", A, [["react"], ["python"]]],
+    ["name-prefix", "sharath's strengths", A, [["90/100"]]],
+
     // ---------------------------------------------------------------- conversational
     ["greeting", "hi", "greeting"],
     ["greeting", "Hello", "greeting"],

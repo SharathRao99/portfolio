@@ -335,11 +335,13 @@ export function answerFromFacts(question: string, hits?: Hit[]): Reply {
     // fix typos ("pyhon", "salry") before matching; the checks above ran on the raw text on purpose
     let q = correctQuery(raw);
     if (isOffTopic(q)) return { answer: OFF_TOPIC_REPLY, sources: [], kind: "off-topic" };
+    // "sharath total experience" / "sharath's skills": the name in front must not stop the shortcuts below
+    const bare = q.replace(/^\s*(mr\.?\s+)?sharath(\s+b\s*c)?('s|s)?\s+(?=\S)/i, "");
     if (INTRO.test(q)) q = "summary overview profile background about";
-    else if (BARE_PROJECTS.test(q)) q = "how many projects list all major portfolio built worked on products";
-    else if (BARE_EXPERIENCE.test(q)) q = "summary overview profile background work history";
-    else if (STRONGEST.test(q)) q = "strongest best top highest strength skills";
-    else if (SKILLS_GENERIC.test(q) && !/\b(python|react|node|next|java|mongo|mysql|aws|stripe)\b/i.test(q)) q = "tech stack technologies main skills overview";
+    else if (BARE_PROJECTS.test(bare)) q = "how many projects list all major portfolio built worked on products";
+    else if (BARE_EXPERIENCE.test(bare)) q = "summary overview profile background work history";
+    else if (STRONGEST.test(bare)) q = "strongest best top highest strength skills";
+    else if (SKILLS_GENERIC.test(bare) && !/\b(python|react|node|next|java|mongo|mysql|aws|stripe)\b/i.test(q)) q = "tech stack technologies main skills overview";
     // "when did he join Zibtek?" is about his dates there, not his notice period ("when can he join?")
     const company = q.match(/\b(zibtek|raw ?conscious)\b/i)?.[1];
     if (company && /\b(when|since when|which (month|year)|what (date|month|year))\b[^?]*\b(join(ed)?|start(ed)?|began|begin)\b/i.test(q)) {
